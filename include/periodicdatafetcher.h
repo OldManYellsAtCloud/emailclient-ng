@@ -28,10 +28,7 @@ private:
 public:
     PeriodicDataFetcher();
     ~PeriodicDataFetcher();
-
-signals:
-    void mailArrived();
-    void foldersFetched();
+    Q_INVOKABLE void fetchFolder(const QString& folder);
 };
 
 #endif // PERIODICDATAFETCHER_H

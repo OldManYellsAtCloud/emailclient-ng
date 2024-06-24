@@ -20,6 +20,11 @@ PeriodicDataFetcher::~PeriodicDataFetcher()
     emailFetcherThread.join();
 }
 
+void PeriodicDataFetcher::fetchFolder(const QString& folder)
+{
+    imapFetcher.fetchNewEmails(folder.toStdString());
+}
+
 void PeriodicDataFetcher::runEmailFetcherThread(std::stop_token stoken)
 {
     while (!stoken.stop_requested()){
@@ -35,12 +40,3 @@ void PeriodicDataFetcher::fetchFolders(bool force)
     imapFetcher.fetchFoldersIfNeeded();
 }
 
-void PeriodicDataFetcher::notifyNewEmail()
-{
-    emit mailArrived();
-}
-
-void PeriodicDataFetcher::notifyNewFolders()
-{
-    emit foldersFetched();
-}

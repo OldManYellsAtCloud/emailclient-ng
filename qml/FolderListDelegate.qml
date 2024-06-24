@@ -16,8 +16,8 @@ Rectangle {
     MouseArea {
         anchors.fill: parent
         onClicked: {
+            periodicDataFetcher.fetchFolder(folderLabel.text);
             modelFactory.getMailModel().switchFolder(folderLabel.text)
-            //modelFactory.getMailModel().fetchNewMailsFromFolder(folderLabel.text);
             drawer.close()
         }
     }
