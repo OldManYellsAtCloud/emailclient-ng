@@ -23,6 +23,7 @@ set(SOURCES src/imap/imaprequest.cpp
             src/curlrequestscheduler.cpp
             src/imap/imapfetcher.cpp
             src/qml_models/foldermodel.cpp
+            src/qml_models/mailmodel.cpp
             src/qml_models/modelfactory.cpp
             src/periodicdatafetcher.cpp
 )
@@ -41,6 +42,7 @@ set(HEADERS include/imap/imaprequest.h
             include/curlrequestscheduler.h
             include/qml_models/foldermodel.h
             include/qml_models/modelfactory.h
+            include/qml_models/mailmodel.h
             include/periodicdatafetcher.h
 )
 
@@ -58,6 +60,8 @@ qt_add_qml_module(appemailclient
     QML_FILES
         qml/Main.qml
         QML_FILES qml/FolderListDelegate.qml
+        QML_FILES qml/MailHeader.qml
+        QML_FILES qml/MailList.qml
 )
 
 

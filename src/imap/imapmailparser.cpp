@@ -283,13 +283,13 @@ MailPart ImapMailParser::parseMailPart(const std::string &mailPartString, const 
     ret.ct = getMailPartContentType(headerDict, globalContentType);
     ret.content = body;
 
-    if (ret.ct == content_type::ATTACHMENT)
+    if (ret.ct == CONTENT_TYPE::ATTACHMENT)
         ret.name = getAttachmentName(headerDict);
 
     return ret;
 }
 
-encoding ImapMailParser::getMailPartEncoding(std::map<std::string, std::string> &headerDict, const std::string &globalEncoding)
+ENCODING ImapMailParser::getMailPartEncoding(std::map<std::string, std::string> &headerDict, const std::string &globalEncoding)
 {
     std::string enc = "";
     if (!globalEncoding.empty()){
@@ -301,10 +301,10 @@ encoding ImapMailParser::getMailPartEncoding(std::map<std::string, std::string> 
     std::transform(enc.begin(), enc.end(), enc.begin(), [](const char c){return std::tolower(c);});
 
     if (enc == "quoted-printable")
-        return encoding::QUOTED_PRINTABLE;
+        return ENCODING::QUOTED_PRINTABLE;
     if (enc == "base64")
-        return encoding::BASE64;
-    return encoding::NONE;
+        return ENCODING::BASE64;
+    return ENCODING::NONE;
 }
 
 /**
@@ -313,7 +313,7 @@ encoding ImapMailParser::getMailPartEncoding(std::map<std::string, std::string> 
  * @param globalContentType
  * @return
  */
-content_type ImapMailParser::getMailPartContentType(std::map<std::string, std::string> &headerDict, const std::string &globalContentType)
+CONTENT_TYPE ImapMailParser::getMailPartContentType(std::map<std::string, std::string> &headerDict, const std::string &globalContentType)
 {
     std::string ct = "";
 
@@ -324,12 +324,12 @@ content_type ImapMailParser::getMailPartContentType(std::map<std::string, std::s
     }
 
     if (ct.find("name=") != std::string::npos)
-        return content_type::ATTACHMENT;
+        return CONTENT_TYPE::ATTACHMENT;
     if (ct.find("text/plain") != std::string::npos)
-        return content_type::TEXT;
+        return CONTENT_TYPE::TEXT;
     if (ct.find("text/html") != std::string::npos)
-        return content_type::HTML;
-    return content_type::OTHER;
+        return CONTENT_TYPE::HTML;
+    return CONTENT_TYPE::OTHER;
 }
 
 /**

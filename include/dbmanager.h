@@ -53,6 +53,9 @@ private:
     const std::string GET_EMAIL_PARTS = "SELECT mail_id, type, name, encoding, content FROM "
                                         "mailparts WHERE mail_id = :mail_id";
 
+    const std::string GET_ALL_UIDS_FROM_FOLDER = "SELECT uid FROM "
+                                                 "mails WHERE folder = :folder";
+
     const std::string MAIL_CACHED = "SELECT COUNT(*) FROM mails WHERE folder = :folder and uid = :uid";
     const std::string LAST_UID_FROM_FOLDER = "SELECT COALESCE(MAX(uid), -1) FROM mails WHERE folder = :folder";
 
@@ -72,6 +75,7 @@ private:
     sqlite3_stmt* get_mailpart_statement;
     sqlite3_stmt* insert_folder_statement;
     sqlite3_stmt* select_folders_statement;
+    sqlite3_stmt* get_all_uids_from_folder_statement;
 
     void initializeConnection();
     void initializeTable(const std::string& statement);
@@ -93,6 +97,8 @@ private:
     std::vector<std::function<void(void)>> mailCallbacks;
     std::vector<std::function<void(void)>> folderCallbacks;
 
+    std::vector<int> getAllUidsFromFolder(std::string folder);
+
     DbManager();
 public:
     static DbManager* getInstance();
@@ -106,6 +112,7 @@ public:
 
     int getLastCachedUid(std::string folder);
     Mail fetchMail(std::string folder, int uid);
+    std::vector<Mail> getAllMailsFromFolder(std::string folder);
 
     void registerMailCallback(const std::function<void(void)> cb);
     void registerFolderCallback(const std::function<void(void)> cb);

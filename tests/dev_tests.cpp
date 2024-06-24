@@ -39,7 +39,7 @@ std::string extractCharsetFromEncodedString(const std::string& s){
     size_t end = s.find('?', start + 1);
     return s.substr(start + 1, end - start - 1);
 }
-
+/*
 std::string extractEncodingTypeFromEncodedString(const std::string& s){
     size_t start = s.find('?');
     start = s.find('?', start + 1);
@@ -53,7 +53,7 @@ std::string extractEncodedTextFromString(const std::string& s){
     size_t end = s.find('?', start + 1);
     return s.substr(start + 1, end - start - 1);
 }
-
+*/
 
 bool isMultipart(const std::string& content_type){
     return content_type.find("multipart") != std::string::npos;

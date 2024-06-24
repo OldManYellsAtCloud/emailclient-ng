@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "mailpart.h"
 
 #define WHITESPACE_CHARS " \r\n\t"
 #define DOUBLE_QUOTE '"'
@@ -20,6 +21,10 @@ bool isStringEncoded(const std::string& s);
 std::string decodeBase64String(const std::string& s);
 std::string decodeQuotedPrintableString(const std::string& s);
 std::string decodeImapUTF7(const std::string &s);
+std::string decodeSender(const std::string &s);
 std::string getImapDateStringFromNDaysAgo(const int& n);
+ENCODING getEncodingType(const std::string& s);
+std::string extractEncodingTypeFromEncodedString(const std::string& s);
+std::string extractEncodedTextFromString(const std::string& s);
 
 #endif // UTILS_H

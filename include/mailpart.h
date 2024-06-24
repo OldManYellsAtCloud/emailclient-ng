@@ -3,19 +3,20 @@
 
 #include <string>
 
-enum encoding {
+
+enum ENCODING {
     BASE64, QUOTED_PRINTABLE, NONE
 };
 
-enum content_type {
+enum CONTENT_TYPE {
     TEXT, HTML, ATTACHMENT, OTHER
 };
 
 struct MailPart {
     std::string content;
     std::string name;
-    content_type ct;
-    encoding enc;
+    CONTENT_TYPE ct;
+    ENCODING enc;
 };
 
 #endif // MAILPART_H

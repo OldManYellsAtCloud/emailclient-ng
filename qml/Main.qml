@@ -22,6 +22,12 @@ Window {
         id: periodicDataFetcher
     }
 
+    StackView {
+        id: stackView
+        anchors.fill: parent
+        initialItem: MailList {}
+    }
+
     Drawer {
         id: drawer
         width: 0.66 * parent.width

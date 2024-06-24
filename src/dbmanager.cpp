@@ -149,6 +149,26 @@ void DbManager::storeMailParts(const Mail &mail)
     }
 }
 
+std::vector<int> DbManager::getAllUidsFromFolder(std::string folder)
+{
+    std::vector<int> uids;
+    resetStatementAndClearBindings(get_all_uids_from_folder_statement);
+    int ret = sqlite3_bind_text(get_all_uids_from_folder_statement, 1, folder.c_str(),
+                                -1, SQLITE_TRANSIENT);
+    checkSuccess(ret, SQLITE_OK, "Could not bind folder to get-all-uids statement");
+
+    ret = sqlite3_step(get_all_uids_from_folder_statement);
+    if (ret != SQLITE_ROW && ret != SQLITE_DONE){
+        throw DbException("Could not query UIDs for folder " + folder);
+    }
+
+    while (ret != SQLITE_DONE){
+        uids.push_back(sqlite3_column_int(get_all_uids_from_folder_statement, 0));
+        ret = sqlite3_step(get_all_uids_from_folder_statement);
+    }
+    return uids;
+}
+
 int DbManager::getDbId(const Mail &mail)
 {
     resetStatementAndClearBindings(get_mail_dbid_statement);
@@ -321,9 +341,9 @@ Mail DbManager::fetchMail(std::string folder, int uid)
 
         while (ret == SQLITE_ROW){
             struct MailPart mp;
-            mp.ct = static_cast<content_type>(sqlite3_column_int(get_mailpart_statement, 1));
+            mp.ct = static_cast<CONTENT_TYPE>(sqlite3_column_int(get_mailpart_statement, 1));
             mp.name = reinterpret_cast<const char*>(sqlite3_column_text(get_mailpart_statement, 2));
-            mp.enc = static_cast<encoding>(sqlite3_column_int(get_mailpart_statement, 3));
+            mp.enc = static_cast<ENCODING>(sqlite3_column_int(get_mailpart_statement, 3));
             mp.content = reinterpret_cast<const char*>(sqlite3_column_text(get_mailpart_statement, 4));
             mailParts.push_back(mp);
             ret = sqlite3_step(get_mailpart_statement);
@@ -334,6 +354,17 @@ Mail DbManager::fetchMail(std::string folder, int uid)
         ERROR("Could not gather mail from database: {}", e.what());
     }
     return mail;
+}
+
+std::vector<Mail> DbManager::getAllMailsFromFolder(std::string folder)
+{
+    std::vector<Mail> mails;
+    std::vector<int> uids = getAllUidsFromFolder(folder);
+    for (const int& uid: uids)
+        mails.push_back(fetchMail(folder, uid));
+
+    return mails;
+
 }
 
 
@@ -391,6 +422,9 @@ void DbManager::prepareStatements()
 
     ret = sqlite3_prepare_v2(dbConnection, SELECT_FOLDERS.c_str(), -1, &select_folders_statement, NULL);
     checkSuccess(ret, SQLITE_OK, "Fatal: could not prepare folder query statement");
+
+    ret = sqlite3_prepare_v2(dbConnection, GET_ALL_UIDS_FROM_FOLDER.c_str(), -1, &get_all_uids_from_folder_statement, NULL);
+    checkSuccess(ret, SQLITE_OK, "Fatal: could not prepare get-uids-from-folder statement");
 }
 
 void DbManager::initializeTable(const std::string& statement)

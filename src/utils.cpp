@@ -155,3 +155,48 @@ std::string decodeImapUTF7(const std::string &s)
     }
     return reinterpret_cast<char*>(out.data());
 }
+
+
+std::string decodeSender(const std::string &s)
+{
+    std::vector<std::string> splitSender = splitString(s, " ");
+    std::string ret = "";
+    for (int i = 0; i < splitSender.size(); ++i){
+        if (isStringEncoded(splitSender[i])){
+            std::string encodedText = extractEncodedTextFromString(splitSender[i]);
+            if (getEncodingType(s) == ENCODING::BASE64)
+                splitSender[i] = decodeBase64String(encodedText);
+            else
+                splitSender[i] = decodeQuotedPrintableString(encodedText);
+        }
+    }
+
+    for (const std::string& st: splitSender){
+        ret.append(st).append(" ");
+    }
+
+    ret.resize(ret.size() - 1);
+    return ret;
+}
+
+std::string extractEncodingTypeFromEncodedString(const std::string& s){
+    size_t start = s.find('?');
+    start = s.find('?', start + 1);
+    return s.substr(start + 1, 1);
+}
+
+std::string extractEncodedTextFromString(const std::string& s){
+    size_t start = s.find('?');
+    start = s.find('?', start + 1);
+    start = s.find('?', start + 1);
+    size_t end = s.find('?', start + 1);
+    return s.substr(start + 1, end - start - 1);
+}
+
+ENCODING getEncodingType(const std::string &s)
+{
+    std::string encodingType = extractEncodingTypeFromEncodedString(s);
+    if (toupper(encodingType[0]) == 'Q')
+        return ENCODING::QUOTED_PRINTABLE;
+    return ENCODING::BASE64;
+}

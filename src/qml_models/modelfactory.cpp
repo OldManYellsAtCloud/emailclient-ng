@@ -9,4 +9,9 @@ QAbstractListModel* ModelFactory::getFolderModel()
     return &folderModel;
 }
 
+QAbstractListModel *ModelFactory::getMailModel()
+{
+    return &mailModel;
+}
+
 

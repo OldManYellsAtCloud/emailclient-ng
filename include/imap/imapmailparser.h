@@ -48,8 +48,8 @@ private:
     bool hasMailPartHeaders(const std::string& mailPartString);
     struct MailPart parseMailPart(const std::string& mailPartString, const std::string& globalEncoding, const std::string& globalContentType);
 
-    encoding getMailPartEncoding(std::map<std::string, std::string>& headerDict, const std::string& globalEncoding);
-    content_type getMailPartContentType(std::map<std::string, std::string>& headerDict, const std::string& globalContentType);
+    ENCODING getMailPartEncoding(std::map<std::string, std::string>& headerDict, const std::string& globalEncoding);
+    CONTENT_TYPE getMailPartContentType(std::map<std::string, std::string>& headerDict, const std::string& globalContentType);
     std::string getAttachmentName(std::map<std::string, std::string>& headerDict);
 
     int extractUidFromResponse(const std::string& response);
