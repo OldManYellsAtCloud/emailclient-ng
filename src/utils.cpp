@@ -4,7 +4,8 @@
 
 #include "base64.h"
 #include "loglibrary.h"
-
+#include <filesystem>
+#include <fstream>
 
 std::string unquoteString(const std::string& s) {
     if (s[0] != DOUBLE_QUOTE )
@@ -200,4 +201,49 @@ ENCODING getEncodingType(const std::string &s)
     if (toupper(encodingType[0]) == 'Q')
         return ENCODING::QUOTED_PRINTABLE;
     return ENCODING::BASE64;
+}
+
+void writeMailToDisk(const Mail &mail)
+{
+    std::string targetFolder = std::filesystem::temp_directory_path().string() + TARGET_FOLDER;
+    std::filesystem::remove_all(targetFolder);
+    std::filesystem::create_directory(targetFolder);
+
+    auto isHTMLTypeAvailable = [](const Mail& mail)->bool {
+        for (const MailPart &mp: mail.parts)
+            if (mp.ct == CONTENT_TYPE::HTML) return true;
+        return false;
+    };
+
+    for (const MailPart& mailPart: mail.parts){
+        std::string content;
+        std::string fileName;
+        switch (mailPart.enc){
+        case ENCODING::BASE64:
+            content = decodeBase64String(mailPart.content);
+            break;
+        case ENCODING::QUOTED_PRINTABLE:
+            content = decodeQuotedPrintableString(mailPart.content);
+            break;
+        case ENCODING::NONE:
+            content = mailPart.content;
+        }
+
+        switch (mailPart.ct){
+        case CONTENT_TYPE::HTML:
+            fileName = "index.html";
+            break;
+        case CONTENT_TYPE::TEXT:
+            if (isHTMLTypeAvailable(mail)) continue;
+            fileName = "index.html";
+            break;
+        default:
+            fileName = mailPart.name;
+        }
+
+        std::ofstream os (targetFolder + "/" + fileName);
+        os << content;
+        os.close();
+    }
+
 }

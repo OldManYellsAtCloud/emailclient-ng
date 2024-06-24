@@ -22,6 +22,7 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     Q_INVOKABLE void switchFolder(QString folder);
+    Q_INVOKABLE void prepareMailForOpening(const int &index);
 
     enum RoleNames {
         subjectRole = Qt::UserRole,

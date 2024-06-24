@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include "mailpart.h"
+#include "mail.h"
 
 #define WHITESPACE_CHARS " \r\n\t"
 #define DOUBLE_QUOTE '"'
@@ -11,6 +11,8 @@
 // printable-quoted
 #define PQ_START "=?"
 #define PQ_END "?="
+
+#define TARGET_FOLDER "/mymails"
 
 std::string unquoteString(const std::string& s);
 const bool isStringEmpty(const std::string& s);
@@ -26,5 +28,6 @@ std::string getImapDateStringFromNDaysAgo(const int& n);
 ENCODING getEncodingType(const std::string& s);
 std::string extractEncodingTypeFromEncodedString(const std::string& s);
 std::string extractEncodedTextFromString(const std::string& s);
+void writeMailToDisk(const Mail& mail);
 
 #endif // UTILS_H

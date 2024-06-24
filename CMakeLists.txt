@@ -6,7 +6,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.4 REQUIRED COMPONENTS Quick )
+find_package(Qt6 6.4 REQUIRED COMPONENTS Quick WebEngineQuick)
 find_package(CURL REQUIRED)
 find_package(LogLibrary REQUIRED)
 find_package(SettingsLib REQUIRED)
@@ -62,11 +62,12 @@ qt_add_qml_module(appemailclient
         QML_FILES qml/FolderListDelegate.qml
         QML_FILES qml/MailHeader.qml
         QML_FILES qml/MailList.qml
+        QML_FILES qml/MailContent.qml
 )
 
 
 target_link_libraries(appemailclient
-    PRIVATE Qt6::Quick curl SettingsLib LogLibrary SQLite::SQLite3
+    PRIVATE Qt6::Quick curl SettingsLib LogLibrary SQLite::SQLite3 Qt6::WebEngineQuick
 )
 
 target_include_directories(appemailclient PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -98,7 +99,7 @@ if (enable_test)
     target_include_directories(email_tests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
     target_link_directories(email_tests PRIVATE $ENV{CMAKE_SYSROOT}/usr/lib)
-    target_link_libraries(email_tests PRIVATE GTest::gtest_main GTest::gmock_main SettingsLib Qt6::Quick curl SQLite::SQLite3)
+    target_link_libraries(email_tests PRIVATE GTest::gtest_main GTest::gmock_main SettingsLib Qt6::Quick curl SQLite::SQLite3 Qt6::WebEngineQuick)
 
     install(TARGETS email_tests
             BUNDLE DESTINATION .

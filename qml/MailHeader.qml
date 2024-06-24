@@ -22,7 +22,6 @@ Rectangle {
         color: "black"
         anchors.top: parent.top
         anchors.right: parent.right
-//        anchors.left: mailDate.right
         horizontalAlignment: Text.AlignRight
         elide: Text.ElideLeft
     }
@@ -36,5 +35,15 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         elide: Text.ElideRight
+    }
+
+
+    MouseArea {
+        anchors.fill: parent
+        onClicked: {
+            modelFactory.getMailModel().prepareMailForOpening(model.index)
+            stackView.push("MailContent.qml")
+
+        }
     }
 }

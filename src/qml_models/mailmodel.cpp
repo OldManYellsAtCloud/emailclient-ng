@@ -56,6 +56,14 @@ void MailModel::switchFolder(QString folder)
     emit endInsertRows();
 }
 
+void MailModel::prepareMailForOpening(const int &index)
+{
+    if (index < 0 || index > mails.size())
+        return;
+
+    writeMailToDisk(mails[index]);
+}
+
 void MailModel::mailArrived()
 {
     if (currentFolder.empty())
