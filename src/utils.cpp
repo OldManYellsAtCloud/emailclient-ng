@@ -122,6 +122,7 @@ std::string decodeQuotedPrintableString(const std::string& s){
     // TODO: this really must go...
     // but currently that's the only somewhat "sane" way I found to represent funky characters consistently...
     //qs = QString::fromStdString(ret);
+    vec.push_back(0); // null terminator
     ret = std::string(reinterpret_cast<char*>(vec.data()));
     return ret;
 }
