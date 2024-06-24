@@ -13,6 +13,8 @@ private:
     DbManager* dbManager;
     std::vector<Mail> mails;
     QHash<int, QByteArray> roleNames_m;
+    std::string currentFolder;
+    void mailArrived();
 public:
     explicit MailModel(QObject *parent = nullptr);
     int rowCount(const QModelIndex &parent) const override;
