@@ -54,7 +54,7 @@ private:
                                         "mailparts WHERE mail_id = :mail_id";
 
     const std::string GET_ALL_UIDS_FROM_FOLDER = "SELECT uid FROM "
-                                                 "mails WHERE folder = :folder";
+                                                 "mails WHERE folder = :folder ORDER BY uid DESC";
 
     const std::string MAIL_CACHED = "SELECT COUNT(*) FROM mails WHERE folder = :folder and uid = :uid";
     const std::string LAST_UID_FROM_FOLDER = "SELECT COALESCE(MAX(uid), -1) FROM mails WHERE folder = :folder";
