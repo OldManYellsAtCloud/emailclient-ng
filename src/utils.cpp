@@ -57,7 +57,7 @@ std::vector<std::string> splitString(const std::string& s, const std::string& de
 
 std::string trim(const std::string& s){
     std::string ret = s;
-    if (ret.empty())
+    if (isStringEmpty(ret))
         return ret;
 
     while (ret.find_first_of(WHITESPACE_CHARS) == 0)
