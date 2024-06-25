@@ -47,8 +47,7 @@ QHash<int, QByteArray> MailModel::roleNames() const
 void MailModel::switchFolder(QString folder)
 {
     currentFolder = folder.toStdString();
-    emit beginRemoveRows(QModelIndex(), 0, mails.size() -1);
-    emit endRemoveRows();
+    clearList();
 
     std::vector<Mail> newMails = dbManager->getAllMailsFromFolder(currentFolder);
     emit beginInsertRows(QModelIndex(), 0, newMails.size() - 1);
@@ -73,7 +72,14 @@ void MailModel::mailArrived()
     if (newMails.size() == mails.size())
         return;
 
+    clearList();
     emit beginInsertRows(QModelIndex(), 0, newMails.size() - 1);
     mails = newMails;
     emit endInsertRows();
+}
+
+void MailModel::clearList()
+{
+    emit beginRemoveRows(QModelIndex(), 0, mails.size() -1);
+    emit endRemoveRows();
 }
