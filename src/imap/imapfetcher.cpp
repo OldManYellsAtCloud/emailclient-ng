@@ -152,7 +152,7 @@ void ImapFetcher::fetchMissingEmailsByUid(const std::vector<int> &uids, std::str
 
     for (const int& uid: uids) {
         curlRequestScheduler->addTask(ImapRequestType::UID_FETCH, folder, std::to_string(uid),
-                                      "BODY[]", callback, folder);
+                                      "BODY.PEEK[]", callback, folder);
     }
 }
 
