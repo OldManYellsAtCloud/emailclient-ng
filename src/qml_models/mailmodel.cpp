@@ -9,7 +9,6 @@ MailModel::MailModel(QObject *parent)
     dbManager = DbManager::getInstance();
     roleNames_m[MailModel::subjectRole] = "subject";
     roleNames_m[MailModel::fromRole] = "from";
-    roleNames_m[MailModel::bodyRole] = "body";
 
     auto newMailCallback = [&](){this->mailArrived();};
     dbManager->registerMailCallback(newMailCallback);
