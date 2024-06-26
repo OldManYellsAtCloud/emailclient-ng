@@ -42,6 +42,7 @@ private:
     std::string getBoundaryFromHeaderValue(const std::string& headerValue);
 
     std::vector<std::string> splitBodyByBoundary(const std::string& body, const std::string boundary);
+    std::string stripBodyFromMultipartHeader(const std::string& body);
     bool isBodyMultiPart(const std::string& body);
 
 

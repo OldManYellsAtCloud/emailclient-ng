@@ -7,62 +7,6 @@ ImapMailParser::ImapMailParser() {
     crs = std::make_unique<CurlRequestScheduler>(ir.get());
 }
 
-/*
-Mail ImapMailParser::fetchMail(std::string folder, int index)
-{
-    auto callback = [&](ResponseContent rc){this->mailFetchedFromNetwork(rc);};
-    crs->addTask(ImapRequestType::FETCH, index, folder, "(BODY[] UID)", callback);
-    sleep(5);
-    /*Mail mail;
-    ResponseContent rc = ir->FETCH(folder, index, "(BODY[] UID)");
-
-    std::string header = getHeader(rc.header.getResponse());
-    normalizeHeader(header);
-    std::map<std::string, std::string> headerDict = parseHeader(header);
-
-    std::string body = getBody(rc.header.getResponse());
-
-    std::string globalContentType;
-    if (headerDict.contains(CONTENT_TYPE_HEADER_KEY))
-        globalContentType = headerDict[CONTENT_TYPE_HEADER_KEY];
-
-    std::string boundary = "";
-    if (isMultipart(globalContentType))
-        boundary = getBoundaryFromHeaderValue(globalContentType);
-
-    std::string globalContentEncoding = "";
-    if (headerDict.contains(CONTENT_TRANSFER_ENCODING_HEADER_KEY))
-        globalContentEncoding = headerDict[CONTENT_TRANSFER_ENCODING_HEADER_KEY];
-
-    std::vector<std::string> mails = splitBodyByBoundary(body, boundary);
-    std::vector<struct MailPart> mailParts;
-    for (const std::string& s: mails){
-        mailParts.push_back(parseMailPart(s, globalContentEncoding, globalContentType));
-    }
-
-    mail.uid = extractUidFromResponse(rc.header.getResponse());
-    mail.folder = folder;
-    mail.subject = headerDict[SUBJECT_HEADER_KEY];
-    mail.from = headerDict[FROM_HEADER_KEY];
-    mail.date_string = headerDict[DATE_HEADER_KEY];
-    mail.parts = mailParts;
-
-    return mail;
-    return Mail{};
-}*/
-/*
-Mail ImapMailParser::fetchMail(std::string folder, std::string index)
-{
-    int i;
-    try {
-        i = std::stoi(index);
-    } catch (std::exception e){
-        ERROR("Could not convert to int: {}, Error: {}", index, e.what());
-        throw;
-    }
-    return fetchMail(folder, i);
-}*/
-
 Mail ImapMailParser::parseImapResponseToMail(ResponseContent rc, const std::string& folder)
 {
     Mail mail;
@@ -77,8 +21,17 @@ Mail ImapMailParser::parseImapResponseToMail(ResponseContent rc, const std::stri
         globalContentType = headerDict[CONTENT_TYPE_HEADER_KEY];
 
     std::string boundary = "";
-    if (isMultipart(globalContentType))
+
+    if (isBodyMultiPart(body)){
+        std::string mailHeader = getHeader(body);
+        normalizeHeader(mailHeader);
+        std::map<std::string, std::string> mailHeaderDict = parseHeader(mailHeader);
+        if (mailHeaderDict.contains(CONTENT_TYPE_HEADER_KEY))
+            boundary = getBoundaryFromHeaderValue(mailHeaderDict[CONTENT_TYPE_HEADER_KEY]);
+        body = stripBodyFromMultipartHeader(body);
+    } else if (isMultipart(globalContentType)) {
         boundary = getBoundaryFromHeaderValue(globalContentType);
+    }
 
     std::string globalContentEncoding = "";
     if (headerDict.contains(CONTENT_TRANSFER_ENCODING_HEADER_KEY))
@@ -117,7 +70,13 @@ std::string ImapMailParser::getBody(const std::string& mailResponse){
         ERROR("Could not find end of header: {}...", mailResponse.substr(0, 100));
         return "?N/A?";
     }
-    return trim(mailResponse.substr(start + sizeof(DOUBLE_CRLF) - 1));
+
+    std::string fullBody = trim(mailResponse.substr(start + sizeof(DOUBLE_CRLF) - 1));
+    /*if (isBodyMultiPart(fullBody)){
+        fullBody = stripBodyFromMultipartHeader(fullBody);
+    }*/
+
+    return fullBody;
 }
 
 void ImapMailParser::normalizeHeader(std::string& header){
@@ -236,13 +195,22 @@ std::vector<std::string> ImapMailParser::splitBodyByBoundary(const std::string& 
     return splitMessages;
 }
 
+std::string ImapMailParser::stripBodyFromMultipartHeader(const std::string &body)
+{
+    std::string ret = getBody(body);
+    size_t endOfBody = body.find_last_of(DOUBLE_CRLF);
+    return ret.substr(0, endOfBody);
+}
+
 bool ImapMailParser::isBodyMultiPart(const std::string &body)
 {
-    std::string trimmedBody = trim(body);
-    if (!hasMailPartHeaders(trimmedBody))
+//    std::string trimmedBody = trim(body);
+    size_t startOfBody = body.find(CRLF);
+    std::string bodyWithoutFirstBoundary = body.substr(startOfBody + 1);
+    if (!hasMailPartHeaders(bodyWithoutFirstBoundary))
         return false;
 
-    std::string header = getHeader(trimmedBody);
+    std::string header = getHeader(bodyWithoutFirstBoundary);
     normalizeHeader(header);
     std::map<std::string, std::string> headerDict = parseHeader(header);
     if (!headerDict.contains(CONTENT_TYPE_HEADER_KEY))
