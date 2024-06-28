@@ -44,6 +44,7 @@ set(HEADERS include/imap/imaprequest.h
             include/qml_models/modelfactory.h
             include/qml_models/mailmodel.h
             include/periodicdatafetcher.h
+            include/imap/imaprequestinterface.h
 )
 
 qt_standard_project_setup()

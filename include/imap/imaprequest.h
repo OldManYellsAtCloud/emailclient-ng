@@ -7,18 +7,13 @@
 #include <stdint.h>
 #include <curl/curl.h>
 
-#include "curlresponse.h"
+#include "imaprequestinterface.h"
 #include "mailsettings.h"
 
 #define IMAPS_PORT 993
 
-struct ResponseContent {
-    curlResponse body;
-    curlResponse header;
-};
 
-
-class ImapRequest {
+class ImapRequest: public ImapRequestInterface {
 private:
     std::string serverAddress;
 
@@ -42,15 +37,15 @@ public:
     ImapRequest();
     ~ImapRequest() = default;
 
-    ResponseContent NOOP();
-    ResponseContent CAPABILITY();
-    ResponseContent ENABLE(std::string capability);
-    ResponseContent EXAMINE(std::string folder);
-    ResponseContent LIST(std::string reference, std::string mailbox);
-    ResponseContent FETCH(std::string folder, uint32_t messageindex, std::string item);
-    ResponseContent FETCH_MULTI_MESSAGE(std::string folder, std::string indexRange, std::string item);
-    ResponseContent UID_FETCH(std::string folder, std::string uid, std::string item);
-    ResponseContent UID_SEARCH(std::string folder, std::string item_to_return, std::string criteria);
+    ResponseContent NOOP() override;
+    ResponseContent CAPABILITY() override;
+    ResponseContent ENABLE(std::string capability) override;
+    ResponseContent EXAMINE(std::string folder) override;
+    ResponseContent LIST(std::string reference, std::string mailbox) override;
+    ResponseContent FETCH(std::string folder, uint32_t messageindex, std::string item) override;
+    ResponseContent FETCH_MULTI_MESSAGE(std::string folder, std::string indexRange, std::string item) override;
+    ResponseContent UID_FETCH(std::string folder, std::string uid, std::string item) override;
+    ResponseContent UID_SEARCH(std::string folder, std::string item_to_return, std::string criteria) override;
 };
 
 #endif // IMAPREQUEST_H
