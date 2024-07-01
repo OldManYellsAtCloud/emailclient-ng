@@ -22,6 +22,9 @@ std::map<char, int> initialize_dict()
         dict[c] = i++;
     }
 
+    dict['+'] = i++;
+    dict['/'] = i;
+
     dict['='] = 0;
     return dict;
 }
@@ -72,6 +75,7 @@ bool inline valid_char(const char& c){
     return (c >= 'A' && c <= 'Z') ||
            (c >= 'a' && c <= 'z') ||
            (c >= '0' && c <= '9') ||
+           c == '+' || c == '/'   ||
            c == '=';
 }
 
