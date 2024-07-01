@@ -6,7 +6,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.4 REQUIRED COMPONENTS Quick WebEngineQuick)
+find_package(Qt6 6.4 REQUIRED COMPONENTS Quick WebEngineQuick Network)
 find_package(CURL REQUIRED)
 find_package(LogLibrary REQUIRED)
 find_package(SettingsLib REQUIRED)
@@ -68,7 +68,7 @@ qt_add_qml_module(appemailclient
 
 
 target_link_libraries(appemailclient
-    PRIVATE Qt6::Quick curl SettingsLib LogLibrary SQLite::SQLite3 Qt6::WebEngineQuick
+    PRIVATE Qt6::Quick curl SettingsLib LogLibrary SQLite::SQLite3 Qt6::WebEngineQuick Qt6::Network
 )
 
 target_include_directories(appemailclient PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

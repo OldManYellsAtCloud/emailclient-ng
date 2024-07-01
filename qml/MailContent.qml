@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Controls
-import QtWebView
+import QtWebEngine
 
 Item {
     Button {
@@ -14,13 +14,14 @@ Item {
         }
     }
 
-    WebView {
-        id: mailWebView
+    WebEngineView {
+        id: mailWebEngineView
         anchors.top: back.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         url: "file:///tmp/mymails/index.html"
-        settings.javaScriptEnabled: false
+        settings.javascriptEnabled: false
+        settings.localContentCanAccessRemoteUrls: true
     }
 }
