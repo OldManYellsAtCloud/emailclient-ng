@@ -9,6 +9,7 @@ Item {
         delegate: MailHeader {
             recipient_or_sender: model.from
             subject: model.subject
+            date: model.date
         }
     }
 }

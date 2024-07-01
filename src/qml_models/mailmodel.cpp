@@ -9,6 +9,7 @@ MailModel::MailModel(QObject *parent)
     dbManager = DbManager::getInstance();
     roleNames_m[MailModel::subjectRole] = "subject";
     roleNames_m[MailModel::fromRole] = "from";
+    roleNames_m[MailModel::dateRole] = "date";
 
     auto newMailCallback = [&](){this->mailArrived();};
     dbManager->registerMailCallback(newMailCallback);
@@ -32,6 +33,9 @@ QVariant MailModel::data(const QModelIndex &index, int role) const
         return ret;
     case MailModel::fromRole:
         ret = QString::fromStdString(decodeSender(mails[index.row()].from));
+        return ret;
+    case MailModel::dateRole:
+        ret = QString::fromStdString(mails[index.row()].date_string);
         return ret;
     default:
         return QVariant();

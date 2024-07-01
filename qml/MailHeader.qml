@@ -12,6 +12,8 @@ Rectangle {
 
     property alias recipient_or_sender: recipient_or_sender.text
     property alias subject: subject.text
+    property alias date: date.text
+
     border.color: "grey"
     border.width: 1
 
@@ -35,6 +37,17 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         elide: Text.ElideRight
+    }
+
+    Text {
+        id: date
+        font.bold: false
+        font.pixelSize: 15
+        color: "green"
+        anchors.top: subject.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        horizontalAlignment: Text.AlignRight
     }
 
 
