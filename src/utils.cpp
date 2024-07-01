@@ -85,7 +85,7 @@ std::string decodeBase64String(const std::string& s){
     return ret;
 }
 
-std::string decodeQuotedPrintableString(const std::string& s){
+std::string decodeQuotedPrintableString(const std::string& s, const bool& convertUnderscoreToSpace){
     std::vector<uint8_t> vec;
     std::string ret;
     std::string hextmp;
@@ -97,10 +97,6 @@ std::string decodeQuotedPrintableString(const std::string& s){
     for (int i = 0; i < s.length(); ++i){
 
         switch (s[i]){
-        case '_':
-            //ret.append(1, 0x20);
-            vec.push_back(0x20);
-            break;
         case '=':
             hextmp = s.substr(i + 1, 2);
             if (hextmp[0] != 0xd && hextmp[1] != 0xa) { // skip CRLF
@@ -114,6 +110,11 @@ std::string decodeQuotedPrintableString(const std::string& s){
             }
             i += 2;
             break;
+        case '_':
+            if (convertUnderscoreToSpace){
+                vec.push_back(0x20);
+                break;
+            } // else fallthrough
         default:
             vec.push_back(s[i]);
             //ret.append(1, s[i]);
@@ -163,13 +164,15 @@ std::string decodeSender(const std::string &s)
 {
     std::vector<std::string> splitSender = splitString(s, " ");
     std::string ret = "";
+    bool convertUnderscoreToSpace = true;
+
     for (int i = 0; i < splitSender.size(); ++i){
         if (isStringEncoded(splitSender[i])){
             std::string encodedText = extractEncodedTextFromString(splitSender[i]);
             if (getEncodingType(s) == ENCODING::BASE64)
                 splitSender[i] = decodeBase64String(encodedText);
             else
-                splitSender[i] = decodeQuotedPrintableString(encodedText);
+                splitSender[i] = decodeQuotedPrintableString(encodedText, convertUnderscoreToSpace);
         }
     }
 

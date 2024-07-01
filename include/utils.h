@@ -21,7 +21,7 @@ std::vector<std::string> quoteAwareSplitString(const std::string& s, const std::
 std::string trim(const std::string& s);
 bool isStringEncoded(const std::string& s);
 std::string decodeBase64String(const std::string& s);
-std::string decodeQuotedPrintableString(const std::string& s);
+std::string decodeQuotedPrintableString(const std::string& s, const bool& convertUnderscoreToSpace = false);
 std::string decodeImapUTF7(const std::string &s);
 std::string decodeSender(const std::string &s);
 std::string getImapDateStringFromNDaysAgo(const int& n);
