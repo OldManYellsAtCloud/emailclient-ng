@@ -72,10 +72,6 @@ std::string ImapMailParser::getBody(const std::string& mailResponse){
     }
 
     std::string fullBody = trim(mailResponse.substr(start + sizeof(DOUBLE_CRLF) - 1));
-    /*if (isBodyMultiPart(fullBody)){
-        fullBody = stripBodyFromMultipartHeader(fullBody);
-    }*/
-
     return fullBody;
 }
 
@@ -229,7 +225,9 @@ bool ImapMailParser::hasMailPartHeaders(const std::string &mailPartString)
         return false;
 
     std::pair<std::string, std::string> firstPossibleHeader = parseHeaderItem(mailPartLines[firstNotEmptyLineNo]);
-    return !firstPossibleHeader.first.empty();
+    bool isKeyValid = firstPossibleHeader.first.find(' ') == std::string::npos; // keys should have no space. If it has a space, it is not a header.
+
+    return !firstPossibleHeader.first.empty() && isKeyValid;
 }
 
 MailPart ImapMailParser::parseMailPart(const std::string &mailPartString, const std::string& globalEncoding, const std::string& globalContentType)
