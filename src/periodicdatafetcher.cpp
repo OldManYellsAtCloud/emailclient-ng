@@ -27,11 +27,14 @@ void PeriodicDataFetcher::fetchFolder(const QString& folder)
 
 void PeriodicDataFetcher::runEmailFetcherThread(std::stop_token stoken)
 {
+    int counter = 0;
     while (!stoken.stop_requested()){
-        for (const std::string folder: watchedFolders){
-            imapFetcher.fetchNewEmails(folder);
+        if ((counter++) % refreshSeconds == 0 ) {
+            for (const std::string folder: watchedFolders){
+                imapFetcher.fetchNewEmails(folder);
+            }
         }
-        std::this_thread::sleep_for(std::chrono::seconds(refreshSeconds));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
 

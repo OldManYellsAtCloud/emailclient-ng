@@ -35,7 +35,7 @@ private:
 
 public:
     ImapRequest();
-    ~ImapRequest() = default;
+    ~ImapRequest();
 
     ResponseContent NOOP() override;
     ResponseContent CAPABILITY() override;

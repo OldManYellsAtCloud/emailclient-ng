@@ -81,6 +81,7 @@ private:
     void initializeTable(const std::string& statement);
     void initializeTables();
     void prepareStatements();
+    void destroyStatements();
 
     void storeMailInfo(const struct Mail& mail);
     Mail getMailInfo(const std::string& folder, const uint32_t uid);

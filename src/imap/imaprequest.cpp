@@ -29,6 +29,11 @@ ImapRequest::ImapRequest()
     initializeCurl();
 }
 
+ImapRequest::~ImapRequest()
+{
+    curl_easy_cleanup(curl);
+}
+
 static size_t storeCurlData(char *ptr, size_t size, size_t nmemb, void *userdata){
     curlResponse *cr = (curlResponse*)userdata;
     std::string s(ptr, nmemb);

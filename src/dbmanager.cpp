@@ -17,6 +17,8 @@ DbManager* DbManager::getInstance()
 
 DbManager::~DbManager()
 {
+    destroyStatements();
+
     int ret = sqlite3_close_v2(dbConnection);
     try {
         checkSuccess(ret, SQLITE_OK, "Could not close database connection");
@@ -348,6 +350,7 @@ Mail DbManager::fetchMail(std::string folder, int uid)
             mailParts.push_back(mp);
             ret = sqlite3_step(get_mailpart_statement);
         }
+
         mail.parts = mailParts;
     } catch (std::exception e){
         mail = {0};
@@ -425,6 +428,20 @@ void DbManager::prepareStatements()
 
     ret = sqlite3_prepare_v2(dbConnection, GET_ALL_UIDS_FROM_FOLDER.c_str(), -1, &get_all_uids_from_folder_statement, NULL);
     checkSuccess(ret, SQLITE_OK, "Fatal: could not prepare get-uids-from-folder statement");
+}
+
+void DbManager::destroyStatements()
+{
+    sqlite3_finalize(insert_mail_statement);
+    sqlite3_finalize(insert_mailpart_statement);
+    sqlite3_finalize(get_mail_dbid_statement);
+    sqlite3_finalize(is_mail_cached_statement);
+    sqlite3_finalize(get_last_cached_uid_statement);
+    sqlite3_finalize(get_mail_statement);
+    sqlite3_finalize(get_mailpart_statement);
+    sqlite3_finalize(insert_folder_statement);
+    sqlite3_finalize(select_folders_statement);
+    sqlite3_finalize(get_all_uids_from_folder_statement);
 }
 
 void DbManager::initializeTable(const std::string& statement)
