@@ -43,6 +43,9 @@ Mail ImapMailParser::parseImapResponseToMail(ResponseContent rc, const std::stri
         mailParts.push_back(parseMailPart(s, globalContentEncoding, globalContentType));
     }
 
+    if (mailParts.size() == 1 && boundary.empty() && mailParts[0].ct == CONTENT_TYPE::OTHER)
+        mailParts[0].ct = CONTENT_TYPE::TEXT;
+
     mail.uid = extractUidFromResponse(rc.header.getResponse());
     mail.folder = folder;
     mail.subject = headerDict[SUBJECT_HEADER_KEY];
