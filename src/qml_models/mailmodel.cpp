@@ -75,14 +75,13 @@ void MailModel::mailArrived()
     if (newMails.size() == mails.size())
         return;
 
-    clearList();
-    emit beginInsertRows(QModelIndex(), 0, newMails.size() - 1);
+    emit beginInsertRows(QModelIndex(), 0, newMails.size() - mails.size() - 1);
     mails = newMails;
     emit endInsertRows();
 }
 
 void MailModel::clearList()
 {
-    emit beginRemoveRows(QModelIndex(), 0, mails.size() -1);
+    emit beginRemoveRows(QModelIndex(), 0, mails.size() - 1);
     emit endRemoveRows();
 }
