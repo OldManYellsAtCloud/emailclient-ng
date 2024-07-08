@@ -80,19 +80,29 @@ bool isStringEncoded(const std::string& s){
 }
 
 std::string decodeBase64String(const std::string& s){
-    std::vector<uint8_t> decoded = base64::decode_base64(s, false);
+    std::vector<uint8_t> decoded = decodeBase64Data(s);
     std::string ret = reinterpret_cast<char*>(decoded.data());
     return ret;
 }
 
+std::vector<uint8_t> decodeBase64Data(const std::string &s)
+{
+    std::vector<uint8_t> decoded = base64::decode_base64(s, false);
+    return decoded;
+}
+
 std::string decodeQuotedPrintableString(const std::string& s, const bool& convertUnderscoreToSpace){
+    auto decodedData = decodeQuotedPrintableData(s, convertUnderscoreToSpace);
+    std::string ret = std::string(reinterpret_cast<char*>(decodedData.data()));
+    return ret;
+}
+
+std::vector<uint8_t> decodeQuotedPrintableData(const std::string &s, const bool &convertUnderscoreToSpace)
+{
     std::vector<uint8_t> vec;
     std::string ret;
     std::string hextmp;
 
-    //QString qs;
-
-    //unsigned char c;
     uint8_t c;
     for (int i = 0; i < s.length(); ++i){
 
@@ -103,7 +113,6 @@ std::string decodeQuotedPrintableString(const std::string& s, const bool& conver
                 try {
                     c = std::stoi(hextmp, 0, 16);
                     vec.push_back(c);
-                    //ret.append(1, c);
                 } catch (std::exception e){
                     ERROR("Could not convert to hexadecimal number: {}", hextmp);
                 }
@@ -117,16 +126,11 @@ std::string decodeQuotedPrintableString(const std::string& s, const bool& conver
             } // else fallthrough
         default:
             vec.push_back(s[i]);
-            //ret.append(1, s[i]);
         }
     }
 
-    // TODO: this really must go...
-    // but currently that's the only somewhat "sane" way I found to represent funky characters consistently...
-    //qs = QString::fromStdString(ret);
     vec.push_back(0); // null terminator
-    ret = std::string(reinterpret_cast<char*>(vec.data()));
-    return ret;
+    return vec;
 }
 
 std::string getImapDateStringFromNDaysAgo(const int &n)
@@ -206,6 +210,11 @@ ENCODING getEncodingType(const std::string &s)
     return ENCODING::BASE64;
 }
 
+std::vector<uint8_t> stringToUintVector(const std::string& s){
+    std::vector<uint8_t> ret (s.begin(), s.end());
+    return ret;
+}
+
 void writeMailToDisk(const Mail &mail)
 {
     std::string targetFolder = std::filesystem::temp_directory_path().string() + TARGET_FOLDER;
@@ -219,17 +228,17 @@ void writeMailToDisk(const Mail &mail)
     };
 
     for (const MailPart& mailPart: mail.parts){
-        std::string content;
+        std::vector<uint8_t> content;
         std::string fileName;
         switch (mailPart.enc){
         case ENCODING::BASE64:
-            content = decodeBase64String(mailPart.content);
+            content = decodeBase64Data(mailPart.content);
             break;
         case ENCODING::QUOTED_PRINTABLE:
-            content = decodeQuotedPrintableString(mailPart.content);
+            content = decodeQuotedPrintableData(mailPart.content);
             break;
         case ENCODING::NONE:
-            content = mailPart.content;
+            content = stringToUintVector(mailPart.content);
         }
 
         switch (mailPart.ct){
@@ -245,8 +254,10 @@ void writeMailToDisk(const Mail &mail)
         }
 
         std::ofstream os (targetFolder + "/" + fileName);
-        os << content;
+        os.write(reinterpret_cast<char*>(content.data()), content.size());
         os.close();
     }
 
 }
+
+
