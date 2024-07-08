@@ -221,11 +221,10 @@ bool mailHasHTMLPart(const Mail& mail){
     return false;
 }
 
-void writeMailToDisk(const Mail &mail)
+void writeMailToDisk(const Mail &mail, const std::string& folder)
 {
-    std::string targetFolder = std::filesystem::temp_directory_path().string() + TARGET_FOLDER;
-    std::filesystem::remove_all(targetFolder);
-    std::filesystem::create_directory(targetFolder);
+    std::filesystem::remove_all(folder);
+    std::filesystem::create_directory(folder);
 
     for (const MailPart& mailPart: mail.parts){
         std::vector<uint8_t> content;
@@ -253,7 +252,7 @@ void writeMailToDisk(const Mail &mail)
             fileName = mailPart.name;
         }
 
-        std::ofstream os (targetFolder + "/" + fileName);
+        std::ofstream os (folder + "/" + fileName);
         os.write(reinterpret_cast<char*>(content.data()), content.size());
         os.close();
     }

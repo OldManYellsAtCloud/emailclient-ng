@@ -15,6 +15,7 @@ public:
     std::string getPassword();
     std::string getDbPath();
     std::string getApplicationUser();
+    std::string getTempFolder();
     int getDaysToFetch();
     std::vector<std::string> getWatchedFolders();
     int getImapRequestDelay();

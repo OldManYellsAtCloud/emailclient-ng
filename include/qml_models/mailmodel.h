@@ -14,8 +14,11 @@ private:
     std::vector<Mail> mails;
     QHash<int, QByteArray> roleNames_m;
     std::string currentFolder;
+    std::string tempFolderPath;
+
     void mailArrived();
     void clearList();
+
 public:
     explicit MailModel(QObject *parent = nullptr);
     int rowCount(const QModelIndex &parent) const override;

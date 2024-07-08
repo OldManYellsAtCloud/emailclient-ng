@@ -13,8 +13,6 @@
 #define PQ_START "=?"
 #define PQ_END "?="
 
-#define TARGET_FOLDER "/mymails"
-
 std::string unquoteString(const std::string& s);
 const bool isStringEmpty(const std::string& s);
 std::vector<uint8_t> stringToUintVector(const std::string& s);
@@ -33,6 +31,6 @@ ENCODING getEncodingType(const std::string& s);
 std::string extractEncodingTypeFromEncodedString(const std::string& s);
 std::string extractEncodedTextFromString(const std::string& s);
 bool mailHasHTMLPart(const Mail& mail);
-void writeMailToDisk(const Mail& mail);
+void writeMailToDisk(const Mail& mail, const std::string& folder);
 
 #endif // UTILS_H

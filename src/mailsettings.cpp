@@ -1,6 +1,7 @@
 #include "mailsettings.h"
 #include "utils.h"
 #include <loglibrary.h>
+#include <filesystem>
 
 
 #define DEFAULT_IMAP_PORT  993
@@ -34,6 +35,16 @@ std::string MailSettings::getUserName()
 std::string MailSettings::getApplicationUser()
 {
     return settings.getValue("general", "applicationUser");
+}
+
+std::string MailSettings::getTempFolder()
+{
+    std::string ret = settings.getValue("general", "tempfolder");
+    if (ret.empty()){
+        ERROR("Could not get temp folder value from config");
+        ret = std::filesystem::temp_directory_path().string() + "/" + "mailclient";
+    }
+    return ret;
 }
 
 std::string MailSettings::getPassword()

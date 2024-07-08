@@ -1,6 +1,8 @@
 #include "mailmodel.h"
 #include "utils.h"
+#include "mailsettings.h"
 
+#include <loglibrary.h>
 
 MailModel::MailModel(QObject *parent)
     : QAbstractListModel{parent}
@@ -14,6 +16,8 @@ MailModel::MailModel(QObject *parent)
 
     auto newMailCallback = [&](){this->mailArrived();};
     dbManager->registerMailCallback(newMailCallback);
+
+    tempFolderPath = MailSettings().getTempFolder();
 }
 
 int MailModel::rowCount(const QModelIndex &parent) const
@@ -41,9 +45,11 @@ QVariant MailModel::data(const QModelIndex &index, int role) const
     case MailModel::contentPathRole:
 
         if (mailHasHTMLPart(mails[index.row()]))
-            ret = QString::fromStdString("file:///tmp/mymails/index.html");
+            ret = QString::fromStdString("file://" + tempFolderPath + "/index.html");
         else
-            ret = QString::fromStdString("file:///tmp/mymails/index.txt");
+            ret = QString::fromStdString("file://" + tempFolderPath + "/index.txt");
+
+        LOG("COntent path: {}", ret.toStdString());
         break;
     default:
         return QVariant();
@@ -73,7 +79,7 @@ void MailModel::prepareMailForOpening(const int &index)
     if (index < 0 || index > mails.size())
         return;
 
-    writeMailToDisk(mails[index]);
+    writeMailToDisk(mails[index], tempFolderPath);
 }
 
 void MailModel::mailArrived()
