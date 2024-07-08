@@ -10,6 +10,7 @@ MailModel::MailModel(QObject *parent)
     roleNames_m[MailModel::subjectRole] = "subject";
     roleNames_m[MailModel::fromRole] = "from";
     roleNames_m[MailModel::dateRole] = "date";
+    roleNames_m[MailModel::contentPathRole] = "contentPath";
 
     auto newMailCallback = [&](){this->mailArrived();};
     dbManager->registerMailCallback(newMailCallback);
@@ -30,16 +31,25 @@ QVariant MailModel::data(const QModelIndex &index, int role) const
     switch (role){
     case MailModel::subjectRole:
         ret = QString::fromStdString(decodeSender(mails[index.row()].subject));
-        return ret;
+        break;
     case MailModel::fromRole:
         ret = QString::fromStdString(decodeSender(mails[index.row()].from));
-        return ret;
+        break;
     case MailModel::dateRole:
         ret = QString::fromStdString(mails[index.row()].date_string);
-        return ret;
+        break;
+    case MailModel::contentPathRole:
+
+        if (mailHasHTMLPart(mails[index.row()]))
+            ret = QString::fromStdString("file:///tmp/mymails/index.html");
+        else
+            ret = QString::fromStdString("file:///tmp/mymails/index.txt");
+        break;
     default:
         return QVariant();
     }
+
+    return ret;
 }
 
 QHash<int, QByteArray> MailModel::roleNames() const

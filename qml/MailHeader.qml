@@ -55,7 +55,7 @@ Rectangle {
         anchors.fill: parent
         onClicked: {
             modelFactory.getMailModel().prepareMailForOpening(model.index)
-            stackView.push("MailContent.qml")
+            stackView.push("MailContent.qml", {"contentPath": model.contentPath})
 
         }
     }

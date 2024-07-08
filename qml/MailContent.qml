@@ -3,6 +3,8 @@ import QtQuick.Controls
 import QtWebEngine
 
 Item {
+    property alias contentPath: mailWebEngineView.url
+
     Button {
         id: back
         anchors.top: parent.top
@@ -20,7 +22,6 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        url: "file:///tmp/mymails/index.html"
         settings.javascriptEnabled: false
         settings.localContentCanAccessRemoteUrls: true
     }

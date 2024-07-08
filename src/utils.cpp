@@ -215,17 +215,17 @@ std::vector<uint8_t> stringToUintVector(const std::string& s){
     return ret;
 }
 
+bool mailHasHTMLPart(const Mail& mail){
+    for (const MailPart &mp: mail.parts)
+        if (mp.ct == CONTENT_TYPE::HTML) return true;
+    return false;
+}
+
 void writeMailToDisk(const Mail &mail)
 {
     std::string targetFolder = std::filesystem::temp_directory_path().string() + TARGET_FOLDER;
     std::filesystem::remove_all(targetFolder);
     std::filesystem::create_directory(targetFolder);
-
-    auto isHTMLTypeAvailable = [](const Mail& mail)->bool {
-        for (const MailPart &mp: mail.parts)
-            if (mp.ct == CONTENT_TYPE::HTML) return true;
-        return false;
-    };
 
     for (const MailPart& mailPart: mail.parts){
         std::vector<uint8_t> content;
@@ -246,8 +246,8 @@ void writeMailToDisk(const Mail &mail)
             fileName = "index.html";
             break;
         case CONTENT_TYPE::TEXT:
-            if (isHTMLTypeAvailable(mail)) continue;
-            fileName = "index.html";
+            if (mailHasHTMLPart(mail)) continue;
+            fileName = "index.txt";
             break;
         default:
             fileName = mailPart.name;

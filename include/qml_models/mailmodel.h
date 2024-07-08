@@ -28,7 +28,8 @@ public:
     enum RoleNames {
         subjectRole = Qt::UserRole,
         fromRole = Qt::UserRole + 1,
-        dateRole = Qt::UserRole + 2
+        dateRole = Qt::UserRole + 2,
+        contentPathRole = Qt::UserRole + 3
     };
 };
 

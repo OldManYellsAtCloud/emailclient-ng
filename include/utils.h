@@ -32,6 +32,7 @@ std::string getImapDateStringFromNDaysAgo(const int& n);
 ENCODING getEncodingType(const std::string& s);
 std::string extractEncodingTypeFromEncodedString(const std::string& s);
 std::string extractEncodedTextFromString(const std::string& s);
+bool mailHasHTMLPart(const Mail& mail);
 void writeMailToDisk(const Mail& mail);
 
 #endif // UTILS_H
