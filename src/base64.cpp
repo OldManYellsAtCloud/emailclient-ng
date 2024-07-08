@@ -36,15 +36,18 @@ bool inline verify_string_length(const std::string &string)
     return string.length() % 4 == 0;
 }
 
+bool inline valid_char(const char& c){
+    return (c >= 'A' && c <= 'Z') ||
+           (c >= 'a' && c <= 'z') ||
+           (c >= '0' && c <= '9') ||
+           c == '+' || c == '/'   ||
+           c == '=';
+}
+
 bool inline verify_string_content(const std::string &string)
 {
-    auto base64_keys = std::views::keys(base64_dict);
-    size_t invalid_char_cnt = std::count_if(string.begin(), string.end(), [&](const char& c){
-        auto it = std::find(base64_keys.begin(), base64_keys.end(), c);
-        return it == base64_keys.end();
-    });
-
-    return invalid_char_cnt == 0;
+    size_t valid_char_cnt = std::count_if(string.begin(), string.end(), valid_char);
+    return valid_char_cnt == string.length();
 }
 
 bool inline verify_string_ending(const std::string &string)
@@ -69,14 +72,6 @@ bool inline verify_string(const std::string &string)
     return verify_string_length(string) &&
            verify_string_content(string) &&
            verify_string_ending(string);
-}
-
-bool inline valid_char(const char& c){
-    return (c >= 'A' && c <= 'Z') ||
-           (c >= 'a' && c <= 'z') ||
-           (c >= '0' && c <= '9') ||
-           c == '+' || c == '/'   ||
-           c == '=';
 }
 
 void inline pad_string(std::string& s){
