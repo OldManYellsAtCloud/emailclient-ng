@@ -2,8 +2,6 @@
 #include "utils.h"
 #include "mailsettings.h"
 
-#include <loglibrary.h>
-
 MailModel::MailModel(QObject *parent)
     : QAbstractListModel{parent}
 {
@@ -49,7 +47,6 @@ QVariant MailModel::data(const QModelIndex &index, int role) const
         else
             ret = QString::fromStdString("file://" + tempFolderPath + "/index.txt");
 
-        LOG("COntent path: {}", ret.toStdString());
         break;
     default:
         return QVariant();

@@ -21,6 +21,8 @@
 #define CONTENT_TYPE_HEADER_KEY  "Content-Type"
 #define CONTENT_TRANSFER_ENCODING_HEADER_KEY  "Content-Transfer-Encoding"
 
+#define SMIME_SIGNED_HEADER  "This is an S/MIME signed message"
+
 class ImapMailParser
 {
 private:
@@ -44,6 +46,8 @@ private:
     std::vector<std::string> splitBodyByBoundary(const std::string& body, const std::string boundary);
     std::string stripBodyFromMultipartHeader(const std::string& body);
     bool isBodyMultiPart(const std::string& body);
+    bool isMessageSMIMESigned(const std::string& body);
+    std::string stripBodyFromSMIMEHeader(const std::string& body);
 
 
     bool hasMailPartHeaders(const std::string& mailPartString);

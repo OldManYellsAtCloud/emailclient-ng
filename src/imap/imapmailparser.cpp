@@ -11,6 +11,7 @@ Mail ImapMailParser::parseImapResponseToMail(ResponseContent rc, const std::stri
 {
     Mail mail;
     std::string header = getHeader(rc.header.getResponse());
+
     normalizeHeader(header);
     std::map<std::string, std::string> headerDict = parseHeader(header);
 
@@ -21,6 +22,9 @@ Mail ImapMailParser::parseImapResponseToMail(ResponseContent rc, const std::stri
         globalContentType = headerDict[CONTENT_TYPE_HEADER_KEY];
 
     std::string boundary = "";
+
+    if (isMessageSMIMESigned(body))
+        body = stripBodyFromSMIMEHeader(body);
 
     if (isBodyMultiPart(body)){
         std::string mailHeader = getHeader(body);
@@ -203,7 +207,6 @@ std::string ImapMailParser::stripBodyFromMultipartHeader(const std::string &body
 
 bool ImapMailParser::isBodyMultiPart(const std::string &body)
 {
-//    std::string trimmedBody = trim(body);
     size_t startOfBody = body.find(CRLF);
     std::string bodyWithoutFirstBoundary = body.substr(startOfBody + 1);
     if (!hasMailPartHeaders(bodyWithoutFirstBoundary))
@@ -217,6 +220,18 @@ bool ImapMailParser::isBodyMultiPart(const std::string &body)
 
     std::string contentType = headerDict[CONTENT_TYPE_HEADER_KEY];
     return isMultipart(contentType);
+}
+
+bool ImapMailParser::isMessageSMIMESigned(const std::string &body)
+{
+    return body.find(SMIME_SIGNED_HEADER) < 5;
+}
+
+std::string ImapMailParser::stripBodyFromSMIMEHeader(const std::string &body)
+{
+    size_t startOfMessage = body.find(SMIME_SIGNED_HEADER) + sizeof(SMIME_SIGNED_HEADER) - 1;
+    startOfMessage += sizeof(DOUBLE_CRLF) - 1;
+    return body.substr(startOfMessage);
 }
 
 bool ImapMailParser::hasMailPartHeaders(const std::string &mailPartString)
