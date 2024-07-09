@@ -30,9 +30,14 @@ private:
     std::unique_ptr<CurlRequestScheduler> crs;
 
     std::string getHeader(const std::string& mailResponse);
-    std::string getBody(const std::string& mailResponse);
+    std::string getNormalizedHeader(const std::string& mailResponse);
     void normalizeHeader(std::string& header);
+
+    std::string getBody(const std::string& mailResponse);
+
+
     std::map<std::string, std::string> parseHeader(const std::string& header);
+    std::map<std::string, std::string> extractAndParseHeader(const std::string& mailResponse);
     std::pair<std::string, std::string> parseHeaderItem(const std::string& header_line);
 
     void decodeHeaderValues(std::map<std::string, std::string>& headerDict);
@@ -42,6 +47,7 @@ private:
 
     bool isMultipart(const std::string& content_type);
     std::string getBoundaryFromHeaderValue(const std::string& headerValue);
+
 
     std::vector<std::string> splitBodyByBoundary(const std::string& body, const std::string boundary);
     std::string stripBodyFromMultipartHeader(const std::string& body);
@@ -54,7 +60,9 @@ private:
     struct MailPart parseMailPart(const std::string& mailPartString, const std::string& globalEncoding, const std::string& globalContentType);
 
     ENCODING getMailPartEncoding(std::map<std::string, std::string>& headerDict, const std::string& globalEncoding);
+    std::string getGlobalContentEncoding(std::map<std::string, std::string>& headerDict);
     CONTENT_TYPE getMailPartContentType(std::map<std::string, std::string>& headerDict, const std::string& globalContentType);
+    std::string getGlobalContentType(std::map<std::string, std::string>& headerDict);
     std::string getAttachmentName(std::map<std::string, std::string>& headerDict);
 
     int extractUidFromResponse(const std::string& response);

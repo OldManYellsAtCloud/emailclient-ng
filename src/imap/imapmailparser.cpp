@@ -10,26 +10,15 @@ ImapMailParser::ImapMailParser() {
 Mail ImapMailParser::parseImapResponseToMail(ResponseContent rc, const std::string& folder)
 {
     Mail mail;
-    std::string header = getHeader(rc.header.getResponse());
-
-    normalizeHeader(header);
-    std::map<std::string, std::string> headerDict = parseHeader(header);
-
+    std::map<std::string, std::string> headerDict = extractAndParseHeader(rc.header.getResponse());
     std::string body = getBody(rc.header.getResponse());
+    body = stripBodyFromSMIMEHeader(body);
 
-    std::string globalContentType;
-    if (headerDict.contains(CONTENT_TYPE_HEADER_KEY))
-        globalContentType = headerDict[CONTENT_TYPE_HEADER_KEY];
-
+    std::string globalContentType = getGlobalContentType(headerDict);
     std::string boundary = "";
 
-    if (isMessageSMIMESigned(body))
-        body = stripBodyFromSMIMEHeader(body);
-
     if (isBodyMultiPart(body)){
-        std::string mailHeader = getHeader(body);
-        normalizeHeader(mailHeader);
-        std::map<std::string, std::string> mailHeaderDict = parseHeader(mailHeader);
+        std::map<std::string, std::string> mailHeaderDict = extractAndParseHeader(body);
         if (mailHeaderDict.contains(CONTENT_TYPE_HEADER_KEY))
             boundary = getBoundaryFromHeaderValue(mailHeaderDict[CONTENT_TYPE_HEADER_KEY]);
         body = stripBodyFromMultipartHeader(body);
@@ -60,6 +49,13 @@ Mail ImapMailParser::parseImapResponseToMail(ResponseContent rc, const std::stri
     return mail;
 }
 
+std::map<std::string, std::string> ImapMailParser::extractAndParseHeader(const std::string &mailResponse)
+{
+    std::string header = getNormalizedHeader(mailResponse);
+    std::map<std::string, std::string> headerDict = parseHeader(header);
+    return headerDict;
+}
+
 
 std::string ImapMailParser::getHeader(const std::string& mailResponse){
     size_t end = mailResponse.find(DOUBLE_CRLF);
@@ -69,6 +65,13 @@ std::string ImapMailParser::getHeader(const std::string& mailResponse){
     }
 
     return trim(mailResponse.substr(0, end));
+}
+
+std::string ImapMailParser::getNormalizedHeader(const std::string &mailResponse)
+{
+    std::string header = getHeader(mailResponse);
+    normalizeHeader(header);
+    return header;
 }
 
 std::string ImapMailParser::getBody(const std::string& mailResponse){
@@ -109,9 +112,10 @@ std::map<std::string, std::string> ImapMailParser::parseHeader(const std::string
     return headerDict;
 }
 
+
 std::pair<std::string, std::string> ImapMailParser::parseHeaderItem(const std::string& header_line){
     size_t key_end = header_line.find(COLON);
-    std::pair<std::string, std::string> ret = std::make_pair("", "");
+    std::pair<std::string, std::string> ret {"", ""};
 
     if (key_end == std::string::npos){
         DBG("Not a valid header item: {}", header_line);
@@ -229,6 +233,9 @@ bool ImapMailParser::isMessageSMIMESigned(const std::string &body)
 
 std::string ImapMailParser::stripBodyFromSMIMEHeader(const std::string &body)
 {
+    if (!isMessageSMIMESigned(body))
+        return body;
+
     size_t startOfMessage = body.find(SMIME_SIGNED_HEADER) + sizeof(SMIME_SIGNED_HEADER) - 1;
     startOfMessage += sizeof(DOUBLE_CRLF) - 1;
     return body.substr(startOfMessage);
@@ -291,6 +298,14 @@ ENCODING ImapMailParser::getMailPartEncoding(std::map<std::string, std::string> 
     return ENCODING::NONE;
 }
 
+std::string ImapMailParser::getGlobalContentEncoding(std::map<std::string, std::string> &headerDict)
+{
+    std::string ret = "";
+    if (headerDict.contains(CONTENT_TRANSFER_ENCODING_HEADER_KEY))
+        ret = headerDict[CONTENT_TRANSFER_ENCODING_HEADER_KEY];
+    return ret;
+}
+
 /**
  * @brief ImapMailFetcher::getMailPartContentType
  * @param headerDict
@@ -314,6 +329,14 @@ CONTENT_TYPE ImapMailParser::getMailPartContentType(std::map<std::string, std::s
     if (ct.find("text/html") != std::string::npos)
         return CONTENT_TYPE::HTML;
     return CONTENT_TYPE::OTHER;
+}
+
+std::string ImapMailParser::getGlobalContentType(std::map<std::string, std::string> &headerDict)
+{
+    std::string ret = "";
+    if (headerDict.contains(CONTENT_TYPE_HEADER_KEY))
+        ret = headerDict[CONTENT_TYPE_HEADER_KEY];
+    return ret;
 }
 
 /**
