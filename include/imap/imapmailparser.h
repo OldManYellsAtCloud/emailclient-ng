@@ -20,6 +20,9 @@
 #define DATE_HEADER_KEY     "Date"
 #define CONTENT_TYPE_HEADER_KEY  "Content-Type"
 #define CONTENT_TRANSFER_ENCODING_HEADER_KEY  "Content-Transfer-Encoding"
+#define CONTENT_DISPOSITION_HEADER_KEY  "Content-Disposition"
+
+#define CONTENT_DISPOSITION_INLINE  "inline"
 
 #define SMIME_SIGNED_HEADER  "This is an S/MIME signed message"
 
@@ -58,12 +61,14 @@ private:
 
     bool hasMailPartHeaders(const std::string& mailPartString);
     struct MailPart parseMailPart(const std::string& mailPartString, const std::string& globalEncoding, const std::string& globalContentType);
+    void mergeInlineMailparts(std::vector<struct MailPart>& mailParts);
 
     ENCODING getMailPartEncoding(std::map<std::string, std::string>& headerDict, const std::string& globalEncoding);
     std::string getGlobalContentEncoding(std::map<std::string, std::string>& headerDict);
     CONTENT_TYPE getMailPartContentType(std::map<std::string, std::string>& headerDict, const std::string& globalContentType);
     std::string getGlobalContentType(std::map<std::string, std::string>& headerDict);
     std::string getAttachmentName(std::map<std::string, std::string>& headerDict);
+    bool isMailPartInline(std::map<std::string, std::string>& headerDict);
 
     int extractUidFromResponse(const std::string& response);
 

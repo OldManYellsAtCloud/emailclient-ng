@@ -17,6 +17,7 @@ struct MailPart {
     std::string name;
     CONTENT_TYPE ct;
     ENCODING enc;
+    bool is_inline;
 };
 
 #endif // MAILPART_H

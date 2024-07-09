@@ -11,6 +11,7 @@ Mail ImapMailParser::parseImapResponseToMail(ResponseContent rc, const std::stri
 {
     Mail mail;
     std::map<std::string, std::string> headerDict = extractAndParseHeader(rc.header.getResponse());
+    ERROR("Mail response: x\n{}\nx", rc.header.getResponse());
     std::string body = getBody(rc.header.getResponse());
     body = stripBodyFromSMIMEHeader(body);
 
@@ -35,6 +36,8 @@ Mail ImapMailParser::parseImapResponseToMail(ResponseContent rc, const std::stri
     for (const std::string& s: mails){
         mailParts.push_back(parseMailPart(s, globalContentEncoding, globalContentType));
     }
+
+    mergeInlineMailparts(mailParts);
 
     if (mailParts.size() == 1 && boundary.empty() && mailParts[0].ct == CONTENT_TYPE::OTHER)
         mailParts[0].ct = CONTENT_TYPE::TEXT;
@@ -273,11 +276,39 @@ MailPart ImapMailParser::parseMailPart(const std::string &mailPartString, const 
     ret.enc = getMailPartEncoding(headerDict, globalEncoding);
     ret.ct = getMailPartContentType(headerDict, globalContentType);
     ret.content = body;
+    ret.is_inline = isMailPartInline(headerDict);
 
     if (ret.ct == CONTENT_TYPE::ATTACHMENT)
         ret.name = getAttachmentName(headerDict);
 
     return ret;
+}
+
+void ImapMailParser::mergeInlineMailparts(std::vector<MailPart> &mailParts)
+{
+    for (auto it = mailParts.begin(); it != mailParts.end();){
+        if (it->ct == CONTENT_TYPE::ATTACHMENT || it->ct == CONTENT_TYPE::OTHER || !it->is_inline){
+            ++it;
+            continue;
+        }
+
+        bool found = false;
+
+        for (auto it2 = mailParts.begin(); it2 != mailParts.end(); ++it2){
+            if (it == it2 || it->ct != it2->ct || it2->is_inline)
+                continue;
+
+            it2->content += CRLF + it->content;
+            it = mailParts.erase(it);
+            found = true;
+            break;
+        }
+
+        if (!found){
+            ERROR("Inline mailPart, with no not-inline counterpart!");
+            ++it;
+        }
+    }
 }
 
 ENCODING ImapMailParser::getMailPartEncoding(std::map<std::string, std::string> &headerDict, const std::string &globalEncoding)
@@ -359,6 +390,14 @@ std::string ImapMailParser::getAttachmentName(std::map<std::string, std::string>
     size_t end = contentType.find('"', start + 1);
     std::string attachmentName = contentType.substr(start, end - start);
     return attachmentName;
+}
+
+bool ImapMailParser::isMailPartInline(std::map<std::string, std::string> &headerDict)
+{
+    if (!headerDict.contains(CONTENT_DISPOSITION_HEADER_KEY))
+        return false;
+
+    return headerDict[CONTENT_DISPOSITION_HEADER_KEY] == CONTENT_DISPOSITION_INLINE;
 }
 
 int ImapMailParser::extractUidFromResponse(const std::string &response)
