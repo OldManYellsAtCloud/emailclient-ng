@@ -68,7 +68,6 @@ private:
     CONTENT_TYPE getMailPartContentType(std::map<std::string, std::string>& headerDict, const std::string& globalContentType);
     std::string getGlobalContentType(std::map<std::string, std::string>& headerDict);
     std::string getAttachmentName(std::map<std::string, std::string>& headerDict);
-    bool isMailPartInline(std::map<std::string, std::string>& headerDict);
 
     int extractUidFromResponse(const std::string& response);
 

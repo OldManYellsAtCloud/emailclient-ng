@@ -252,7 +252,12 @@ void writeMailToDisk(const Mail &mail, const std::string& folder)
             fileName = mailPart.name;
         }
 
-        std::ofstream os (folder + "/" + fileName);
+        bool addNewLine = std::filesystem::exists(folder + "/" + fileName);
+
+        std::ofstream os (folder + "/" + fileName, std::ios_base::app);
+        if (addNewLine)
+            os << std::endl;
+
         os.write(reinterpret_cast<char*>(content.data()), content.size());
         os.close();
     }
