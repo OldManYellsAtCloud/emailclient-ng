@@ -24,5 +24,13 @@ Item {
         anchors.bottom: parent.bottom
         settings.javascriptEnabled: false
         settings.localContentCanAccessRemoteUrls: true
+
+        onNavigationRequested: {
+            if (request.navigationType == WebEngineView.LinkClickedNavigation){
+                request.action = WebEngineView.IgnoreRequest
+            }
+        }
     }
+
+
 }
