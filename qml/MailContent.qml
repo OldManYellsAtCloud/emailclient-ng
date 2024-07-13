@@ -25,9 +25,10 @@ Item {
         settings.javascriptEnabled: false
         settings.localContentCanAccessRemoteUrls: true
 
-        onNavigationRequested: {
+        onNavigationRequested: function(request){
             if (request.navigationType == WebEngineView.LinkClickedNavigation){
                 request.action = WebEngineView.IgnoreRequest
+                Qt.openUrlExternally(request.url)
             }
         }
     }
