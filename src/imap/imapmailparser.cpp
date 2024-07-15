@@ -11,7 +11,7 @@ Mail ImapMailParser::parseImapResponseToMail(ResponseContent rc, const std::stri
 {
     Mail mail;
     std::map<std::string, std::string> headerDict = extractAndParseHeader(rc.header.getResponse());
-    ERROR("Mail response: x\n{}\nx", rc.header.getResponse());
+
     std::string body = getBody(rc.header.getResponse());
     body = stripBodyFromSMIMEHeader(body);
 

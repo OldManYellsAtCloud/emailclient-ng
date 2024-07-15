@@ -2,7 +2,7 @@ import QtQuick
 
 Rectangle {
     property alias text: folderLabel.text
-    width: parent.width
+    width: parent ? parent.width : undefined
     height: 30
     Text {
         id: folderLabel
