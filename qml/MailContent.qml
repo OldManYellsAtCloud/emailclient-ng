@@ -26,7 +26,7 @@ Item {
         settings.localContentCanAccessRemoteUrls: true
 
         onNavigationRequested: function(request){
-            if (request.navigationType == WebEngineView.LinkClickedNavigation){
+            if (request.navigationType === WebEngineView.LinkClickedNavigation){
                 request.action = WebEngineView.IgnoreRequest
                 Qt.openUrlExternally(request.url)
             }
