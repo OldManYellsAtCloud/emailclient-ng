@@ -48,11 +48,11 @@ private:
     std::string extractEncodingTypeFromEncodedString(const std::string& s);
     std::string extractEncodedTextFromString(const std::string& s);
 
-    bool isMultipart(const std::string& content_type);
-    std::string getBoundaryFromHeaderValue(const std::string& headerValue);
+    bool isMultipart(const std::optional<std::string>& content_type);
+    std::string getBoundaryFromHeaderValue(const std::optional<std::string>& headerValue);
 
 
-    std::vector<std::string> splitBodyByBoundary(const std::string& body, const std::string boundary);
+    std::vector<std::string> splitBodyByBoundary(const std::string& body, const std::optional<std::string> boundary);
     std::string stripBodyFromMultipartHeader(const std::string& body);
     bool isBodyMultiPart(const std::string& body);
     bool isMessageSMIMESigned(const std::string& body);
@@ -64,18 +64,14 @@ private:
     void mergeInlineMailparts(std::vector<struct MailPart>& mailParts);
 
     ENCODING getMailPartEncoding(std::map<std::string, std::string>& headerDict, const std::string& globalEncoding);
-    std::string getGlobalContentEncoding(std::map<std::string, std::string>& headerDict);
     CONTENT_TYPE getMailPartContentType(std::map<std::string, std::string>& headerDict, const std::string& globalContentType);
-    std::string getGlobalContentType(std::map<std::string, std::string>& headerDict);
+    std::optional<std::string> getGlobalContentType(std::map<std::string, std::string>& headerDict);
     std::string getAttachmentName(std::map<std::string, std::string>& headerDict);
 
     int extractUidFromResponse(const std::string& response);
 
 public:
     ImapMailParser();
-    /*Mail fetchMail(std::string folder, int index);
-    Mail fetchMail(std::string folder, std::string index);*/
-
     Mail parseImapResponseToMail(ResponseContent rc, const std::string& folder);
 };
 

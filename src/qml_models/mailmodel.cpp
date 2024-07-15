@@ -1,3 +1,4 @@
+#include <loglibrary.h>
 #include "mailmodel.h"
 #include "utils.h"
 #include "mailsettings.h"
@@ -52,6 +53,8 @@ QVariant MailModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
+    DBG("MailModel - Returning data: {}", ret.toStdString());
+
     return ret;
 }
 
@@ -75,6 +78,13 @@ void MailModel::prepareMailForOpening(const int &index)
 {
     if (index < 0 || index > mails.size())
         return;
+
+    if (!mails[index].arePartsAvailable()){
+        std::string folder = mails[index].folder;
+        int uid = mails[index].uid;
+        bool fetchMailParts = true;
+        mails[index] = dbManager->fetchMail(folder, uid, fetchMailParts);
+    }
 
     writeMailToDisk(mails[index], tempFolderPath);
 }

@@ -61,6 +61,7 @@ void DbManager::registerFolderCallback(const std::function<void ()> cb)
 
 void DbManager::storeEmail(const Mail &mail)
 {
+
     int ret;
     try {
         ret = sqlite3_exec(dbConnection, BEGIN_TRANSACTION.c_str(), NULL, NULL, NULL);
@@ -84,6 +85,7 @@ void DbManager::storeEmail(const Mail &mail)
 
 void DbManager::storeMailInfo(const Mail &mail)
 {
+    const std::lock_guard<std::mutex> lock(dbLock);
     resetStatementAndClearBindings(insert_mail_statement);
 
     auto getIndex = [&](const std::string& param_name)->int {
@@ -302,8 +304,10 @@ int DbManager::getLastCachedUid(std::string folder)
     return lastUid;
 }
 
-Mail DbManager::fetchMail(std::string folder, int uid)
+Mail DbManager::fetchMail(std::string folder, int uid, bool includeContent)
 {
+    const std::lock_guard<std::mutex> lock(dbLock);
+
     Mail mail;
     auto getEmailIndex = [&](const std::string& parameter_name)->int {
         return getParameterIndex(get_mail_statement, parameter_name.c_str());
@@ -334,24 +338,27 @@ Mail DbManager::fetchMail(std::string folder, int uid)
 
         int dbid = getDbId(mail);
         ret = sqlite3_bind_int(get_mailpart_statement, getEmailPartIndex(":mail_id"), dbid);
-        checkSuccess(ret, SQLITE_OK, "Could not bind mail_id to get email part statement");
+        checkSuccess(ret, SQLITE_OK, "Could not bind mail_id to get email part statement.");
 
-        ret = sqlite3_step(get_mailpart_statement);
-        checkSuccess(ret, SQLITE_ROW, "Could not execute get mailpart statement");
-
-        std::vector<MailPart> mailParts;
-
-        while (ret == SQLITE_ROW){
-            struct MailPart mp;
-            mp.ct = static_cast<CONTENT_TYPE>(sqlite3_column_int(get_mailpart_statement, 1));
-            mp.name = reinterpret_cast<const char*>(sqlite3_column_text(get_mailpart_statement, 2));
-            mp.enc = static_cast<ENCODING>(sqlite3_column_int(get_mailpart_statement, 3));
-            mp.content = reinterpret_cast<const char*>(sqlite3_column_text(get_mailpart_statement, 4));
-            mailParts.push_back(mp);
+        if (includeContent){
             ret = sqlite3_step(get_mailpart_statement);
+            checkSuccess(ret, SQLITE_ROW, "Could not execute get mailpart statement");
+
+
+            std::vector<MailPart> mailParts;
+
+            while (ret == SQLITE_ROW){
+                struct MailPart mp;
+                mp.ct = static_cast<CONTENT_TYPE>(sqlite3_column_int(get_mailpart_statement, 1));
+                mp.name = reinterpret_cast<const char*>(sqlite3_column_text(get_mailpart_statement, 2));
+                mp.enc = static_cast<ENCODING>(sqlite3_column_int(get_mailpart_statement, 3));
+                mp.content = reinterpret_cast<const char*>(sqlite3_column_text(get_mailpart_statement, 4));
+                mailParts.push_back(mp);
+                ret = sqlite3_step(get_mailpart_statement);
+            }
+            mail.parts = mailParts;
         }
 
-        mail.parts = mailParts;
     } catch (std::exception e){
         mail = {0};
         ERROR("Could not gather mail from database: {}", e.what());

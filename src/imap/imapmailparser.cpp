@@ -2,6 +2,8 @@
 #include "loglibrary.h"
 #include "utils.h"
 
+typedef std::map<std::string, std::string> KvDict;
+
 ImapMailParser::ImapMailParser() {
     ir = std::make_unique<ImapRequest>();
     crs = std::make_unique<CurlRequestScheduler>(ir.get());
@@ -10,21 +12,21 @@ ImapMailParser::ImapMailParser() {
 Mail ImapMailParser::parseImapResponseToMail(ResponseContent rc, const std::string& folder)
 {
     Mail mail;
-    std::map<std::string, std::string> headerDict = extractAndParseHeader(rc.header.getResponse());
+    KvDict headerDict = extractAndParseHeader(rc.header.getResponse());
 
     std::string body = getBody(rc.header.getResponse());
     body = stripBodyFromSMIMEHeader(body);
 
-    std::string globalContentType = getGlobalContentType(headerDict);
-    std::string boundary = "";
+    std::optional<std::string> globalContentType = getGlobalContentType(headerDict);
+    std::optional<std::string> boundary;
 
     if (isBodyMultiPart(body)){
-        std::map<std::string, std::string> mailHeaderDict = extractAndParseHeader(body);
+        KvDict mailHeaderDict = extractAndParseHeader(body);
         if (mailHeaderDict.contains(CONTENT_TYPE_HEADER_KEY))
             boundary = getBoundaryFromHeaderValue(mailHeaderDict[CONTENT_TYPE_HEADER_KEY]);
         body = stripBodyFromMultipartHeader(body);
     } else if (isMultipart(globalContentType)) {
-        boundary = getBoundaryFromHeaderValue(globalContentType);
+        boundary = getBoundaryFromHeaderValue(globalContentType.value_or("EMPTY"));
     }
 
     std::string globalContentEncoding = "";
@@ -34,10 +36,10 @@ Mail ImapMailParser::parseImapResponseToMail(ResponseContent rc, const std::stri
     std::vector<std::string> mails = splitBodyByBoundary(body, boundary);
     std::vector<struct MailPart> mailParts;
     for (const std::string& s: mails){
-        mailParts.push_back(parseMailPart(s, globalContentEncoding, globalContentType));
+        mailParts.push_back(parseMailPart(s, globalContentEncoding, globalContentType.value_or("")));
     }
 
-    if (mailParts.size() == 1 && boundary.empty() && mailParts[0].ct == CONTENT_TYPE::OTHER)
+    if (mailParts.size() == 1 && !boundary.has_value() && mailParts[0].ct == CONTENT_TYPE::OTHER)
         mailParts[0].ct = CONTENT_TYPE::TEXT;
 
     mail.uid = extractUidFromResponse(rc.header.getResponse());
@@ -104,7 +106,7 @@ std::map<std::string, std::string> ImapMailParser::parseHeader(const std::string
         end = header.find(CRLF, start);
         line = header.substr(start, end - start);
         std::pair<std::string, std::string> headerItem = parseHeaderItem(line);
-        if (headerItem.first != "")
+        if (!headerItem.first.empty())
             headerDict[headerItem.first] = headerItem.second;
 
         start = end + sizeof(CRLF) - 1;
@@ -130,7 +132,7 @@ std::pair<std::string, std::string> ImapMailParser::parseHeaderItem(const std::s
 
 void ImapMailParser::decodeHeaderValues(std::map<std::string, std::string>& headerDict){
     for (auto it = headerDict.begin(); it != headerDict.end(); ++it){
-        std::vector<std::string> splitValues = splitString(it->second, " ");
+        std::vector<std::string> splitValues = splitString(it->second, SPACE);
 
         it->second = "";
         for (int i = 0; i < splitValues.size(); ++i){
@@ -170,28 +172,30 @@ std::string ImapMailParser::extractEncodedTextFromString(const std::string& s){
     return s.substr(start + 1, end - start - 1);
 }
 
-bool ImapMailParser::isMultipart(const std::string& content_type){
-    return content_type.find("multipart") != std::string::npos;
+bool ImapMailParser::isMultipart(const std::optional<std::string>& content_type){
+    return content_type.value_or("").find("multipart") != std::string::npos;
 }
 
-std::string ImapMailParser::getBoundaryFromHeaderValue(const std::string& headerValue){
-    const std::string BOUNDARY = "boundary=";
-    size_t start = headerValue.find(BOUNDARY);
+std::string ImapMailParser::getBoundaryFromHeaderValue(const std::optional<std::string>& headerValue){
     std::string ret = "?N/A?";
+
+    const std::string BOUNDARY = "boundary=";
+    size_t start = headerValue.value_or("").find(BOUNDARY);
+
     if (start != std::string::npos){
-        size_t end = headerValue.find('"', start + BOUNDARY.length() + 1);
-        ret = headerValue.substr(start + BOUNDARY.length(), end - start - BOUNDARY.length() + 1);
+        size_t end = headerValue.value().find('"', start + BOUNDARY.length() + 1);
+        ret = headerValue.value().substr(start + BOUNDARY.length(), end - start - BOUNDARY.length() + 1);
         ret = unquoteString(ret);
         ret.insert(ret.begin(), 2, '-');
     }
     return ret;
 }
 
-std::vector<std::string> ImapMailParser::splitBodyByBoundary(const std::string& body, std::string boundary){
+std::vector<std::string> ImapMailParser::splitBodyByBoundary(const std::string& body, std::optional<std::string> boundary){
     std::vector<std::string> splitMessages;
 
-    if (boundary != "") {
-        splitMessages = splitString(body, boundary);
+    if (boundary.has_value()) {
+        splitMessages = splitString(body, boundary.value());
         if (splitMessages.size() > 2) {
             splitMessages.erase(splitMessages.begin());
             splitMessages.erase(splitMessages.end() - 1);
@@ -300,14 +304,6 @@ ENCODING ImapMailParser::getMailPartEncoding(std::map<std::string, std::string> 
     return ENCODING::NONE;
 }
 
-std::string ImapMailParser::getGlobalContentEncoding(std::map<std::string, std::string> &headerDict)
-{
-    std::string ret = "";
-    if (headerDict.contains(CONTENT_TRANSFER_ENCODING_HEADER_KEY))
-        ret = headerDict[CONTENT_TRANSFER_ENCODING_HEADER_KEY];
-    return ret;
-}
-
 /**
  * @brief ImapMailFetcher::getMailPartContentType
  * @param headerDict
@@ -333,9 +329,9 @@ CONTENT_TYPE ImapMailParser::getMailPartContentType(std::map<std::string, std::s
     return CONTENT_TYPE::OTHER;
 }
 
-std::string ImapMailParser::getGlobalContentType(std::map<std::string, std::string> &headerDict)
+std::optional<std::string> ImapMailParser::getGlobalContentType(std::map<std::string, std::string> &headerDict)
 {
-    std::string ret = "";
+    std::optional<std::string> ret;
     if (headerDict.contains(CONTENT_TYPE_HEADER_KEY))
         ret = headerDict[CONTENT_TYPE_HEADER_KEY];
     return ret;

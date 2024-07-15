@@ -5,12 +5,14 @@
 #include "mailsettings.h"
 
 #include <sqlite3.h>
+#include <mutex>
 #include <memory>
 #include <functional>
 
 class DbManager
 {
 private:
+    std::mutex dbLock;
     const std::string CREATE_MAIL_TABLE = "CREATE TABLE IF NOT EXISTS mails "
                                           "(id INTEGER PRIMARY KEY AUTOINCREMENT, "
                                           "uid INTEGER, "
@@ -112,7 +114,7 @@ public:
     bool areFoldersCached();
 
     int getLastCachedUid(std::string folder);
-    Mail fetchMail(std::string folder, int uid);
+    Mail fetchMail(std::string folder, int uid, bool includeContent = false);
     std::vector<Mail> getAllMailsFromFolder(std::string folder);
 
     void registerMailCallback(const std::function<void(void)> cb);

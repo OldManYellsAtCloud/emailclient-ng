@@ -11,6 +11,9 @@ struct Mail {
     std::string from;
     std::string date_string;
     std::vector<MailPart> parts;
+    bool arePartsAvailable() {
+        return parts.size() > 0;
+    }
 };
 
 #endif // MAIL_H
