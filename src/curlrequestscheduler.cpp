@@ -3,6 +3,7 @@
 
 void CurlRequestScheduler::executeRequests()
 {
+    emit fetchStarted();
     ResponseContent rc;
     while (!taskQueue.empty()){
         LOG("Taskqueue size: {}", taskQueue.size());
@@ -41,6 +42,7 @@ void CurlRequestScheduler::executeRequests()
         std::this_thread::sleep_for(std::chrono::milliseconds(delayMs)); // rate limit
         taskQueue.pop();
     }
+    emit fetchFinished();
     engineRunning = false;
 }
 

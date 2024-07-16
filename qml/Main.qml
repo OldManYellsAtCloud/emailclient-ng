@@ -35,6 +35,7 @@ Window {
         id: appHeader
         folder: modelFactory.getMailModel().currentFolder === "" ? qsTr("No Folder Selected") :
                                                                    modelFactory.getMailModel().currentFolder
+        fetchInProgress: periodicDataFetcher.fetchInProgress
         anchors.top: parent.top
     }
 

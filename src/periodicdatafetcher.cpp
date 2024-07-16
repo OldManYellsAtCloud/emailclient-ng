@@ -9,6 +9,8 @@ PeriodicDataFetcher::PeriodicDataFetcher():
     refreshSeconds = ms.getRefreshFrequencySeconds();
 
     watchedFolders = ms.getWatchedFolders();
+    connect(&curlRequestScheduler, &CurlRequestScheduler::fetchStarted, this, &PeriodicDataFetcher::fetchStarted);
+    connect(&curlRequestScheduler, &CurlRequestScheduler::fetchFinished, this, &PeriodicDataFetcher::fetchFinished);
 
     fetchFolders();
     emailFetcherThread = std::jthread(&PeriodicDataFetcher::runEmailFetcherThread, this);
@@ -23,6 +25,23 @@ PeriodicDataFetcher::~PeriodicDataFetcher()
 void PeriodicDataFetcher::fetchFolder(const QString& folder)
 {
     imapFetcher.fetchNewEmails(folder.toStdString());
+}
+
+bool PeriodicDataFetcher::getFetchInProgress()
+{
+    return isFetchInProgress;
+}
+
+void PeriodicDataFetcher::fetchStarted()
+{
+    isFetchInProgress = true;
+    emit fetchInProgressChanged();
+}
+
+void PeriodicDataFetcher::fetchFinished()
+{
+    isFetchInProgress = false;
+    emit fetchInProgressChanged();
 }
 
 void PeriodicDataFetcher::runEmailFetcherThread(std::stop_token stoken)

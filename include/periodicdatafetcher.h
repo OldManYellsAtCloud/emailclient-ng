@@ -19,6 +19,9 @@ private:
     std::jthread emailFetcherThread;
 
     int refreshSeconds;
+    bool isFetchInProgress;
+
+    Q_PROPERTY(bool fetchInProgress READ getFetchInProgress NOTIFY fetchInProgressChanged FINAL)
 
     void runEmailFetcherThread(std::stop_token stoken);
     void fetchFolders(bool force = false);
@@ -29,6 +32,14 @@ public:
     PeriodicDataFetcher();
     ~PeriodicDataFetcher();
     Q_INVOKABLE void fetchFolder(const QString& folder);
+    bool getFetchInProgress();
+
+public slots:
+    void fetchStarted();
+    void fetchFinished();
+
+signals:
+    void fetchInProgressChanged();
 };
 
 #endif // PERIODICDATAFETCHER_H
