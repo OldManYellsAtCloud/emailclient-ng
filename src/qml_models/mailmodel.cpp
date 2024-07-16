@@ -36,7 +36,7 @@ QVariant MailModel::data(const QModelIndex &index, int role) const
         ret = QString::fromStdString(decodeSender(mails[index.row()].subject));
         break;
     case MailModel::fromRole:
-        ret = QString::fromStdString(decodeSender(mails[index.row()].from));
+        ret = QString::fromStdString(extractNameFromSender(decodeSender(mails[index.row()].from)));
         break;
     case MailModel::dateRole:
         ret = QString::fromStdString(mails[index.row()].date_string);

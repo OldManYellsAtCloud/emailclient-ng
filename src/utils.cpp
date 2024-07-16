@@ -265,3 +265,13 @@ void writeMailToDisk(const Mail &mail, const std::string& folder)
 }
 
 
+
+std::string extractNameFromSender(const std::string &decodedSender)
+{
+    size_t startOfEmail = decodedSender.rfind("<");
+    if (startOfEmail == std::string::npos || startOfEmail < 1)
+        return decodedSender;
+
+    std::string name = decodedSender.substr(0, startOfEmail - 1);
+    return name;
+}
