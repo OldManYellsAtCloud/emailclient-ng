@@ -1,7 +1,7 @@
 #ifndef IMAPMAILPARSER_H
 #define IMAPMAILPARSER_H
 
-#include "imaprequest.h"
+#include "curlrequest.h"
 #include "curlrequestscheduler.h"
 
 #include "mail.h"
@@ -29,7 +29,7 @@
 class ImapMailParser
 {
 private:
-    std::unique_ptr<ImapRequest> ir;
+    std::unique_ptr<CurlRequest> cr;
     std::unique_ptr<CurlRequestScheduler> crs;
 
     std::string getHeader(const std::string& mailResponse);

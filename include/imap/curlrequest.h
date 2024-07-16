@@ -1,5 +1,5 @@
-#ifndef IMAPREQUEST_H
-#define IMAPREQUEST_H
+#ifndef CURLREQUEST_H
+#define CURLREQUEST_H
 
 #include <string>
 #include <chrono>
@@ -13,11 +13,11 @@
 #define IMAPS_PORT 993
 
 
-class ImapRequest: public ImapRequestInterface {
+class CurlRequest: public ImapRequestInterface {
 private:
     std::string serverAddress;
 
-    int imapRequestDelayMs = 0;
+    int requestDelayMs = 0;
     std::chrono::time_point<std::chrono::steady_clock> lastRequestTime;
 
     CURL *curl;
@@ -34,8 +34,8 @@ private:
     std::unique_ptr<MailSettings> mailSettings;
 
 public:
-    ImapRequest();
-    ~ImapRequest();
+    CurlRequest();
+    ~CurlRequest();
 
     ResponseContent NOOP() override;
     ResponseContent CAPABILITY() override;
@@ -48,4 +48,4 @@ public:
     ResponseContent UID_SEARCH(std::string folder, std::string item_to_return, std::string criteria) override;
 };
 
-#endif // IMAPREQUEST_H
+#endif // CURLREQUEST_H

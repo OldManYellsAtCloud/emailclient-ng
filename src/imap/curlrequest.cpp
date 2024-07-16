@@ -1,4 +1,4 @@
-#include "imap/imaprequest.h"
+#include "imap/curlrequest.h"
 #include <loglibrary.h>
 #include <thread>
 
@@ -9,27 +9,27 @@ std::string constructUrl(std::string host, int port){
     return std::format("{}{}:{}", prefix, host, port);
 }
 
-void ImapRequest::waitForRateLimit()
+void CurlRequest::waitForRateLimit()
 {
     std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
     auto diffSinceLastRequest = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastRequestTime);
 
-    if (diffSinceLastRequest.count() < imapRequestDelayMs) {
-        auto sleepBeforeNextRequest = imapRequestDelayMs - diffSinceLastRequest.count();
+    if (diffSinceLastRequest.count() < requestDelayMs) {
+        auto sleepBeforeNextRequest = requestDelayMs - diffSinceLastRequest.count();
         DBG("Rate limit, sleep {}ms", sleepBeforeNextRequest);
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepBeforeNextRequest));
     }
 }
 
-ImapRequest::ImapRequest()
+CurlRequest::CurlRequest()
 {
     mailSettings = std::make_unique<MailSettings>();
-    imapRequestDelayMs = mailSettings->getImapRequestDelay();
+    requestDelayMs = mailSettings->getImapRequestDelay();
     lastRequestTime = std::chrono::steady_clock::now();
     initializeCurl();
 }
 
-ImapRequest::~ImapRequest()
+CurlRequest::~CurlRequest()
 {
     curl_easy_cleanup(curl);
 }
@@ -40,7 +40,7 @@ static size_t storeCurlData(char *ptr, size_t size, size_t nmemb, void *userdata
     return cr->storeResponse(ptr, nmemb);
 }
 
-void ImapRequest::prepareCurlRequest(const std::string& url, const std::string& customRequest)
+void CurlRequest::prepareCurlRequest(const std::string& url, const std::string& customRequest)
 {
     header.reset();
     body.reset();
@@ -58,7 +58,7 @@ void ImapRequest::prepareCurlRequest(const std::string& url, const std::string& 
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, customRequest.c_str());
 }
 
-void ImapRequest::initializeCurl()
+void CurlRequest::initializeCurl()
 {
     curl = curl_easy_init();
 
@@ -74,7 +74,7 @@ void ImapRequest::initializeCurl()
     curl_easy_setopt(curl, CURLOPT_PASSWORD, password.c_str());
 }
 
-CURLcode ImapRequest::performCurlRequest()
+CURLcode CurlRequest::performCurlRequest()
 {
 
     waitForRateLimit();
@@ -87,7 +87,7 @@ CURLcode ImapRequest::performCurlRequest()
     return res;
 }
 
-ResponseContent ImapRequest::NOOP()
+ResponseContent CurlRequest::NOOP()
 {
     prepareCurlRequest(serverAddress, "NOOP");
     performCurlRequest();
@@ -97,7 +97,7 @@ ResponseContent ImapRequest::NOOP()
     return rp;
 }
 
-ResponseContent ImapRequest::CAPABILITY()
+ResponseContent CurlRequest::CAPABILITY()
 {
     prepareCurlRequest(serverAddress, "CAPABILITY");
     performCurlRequest();
@@ -108,7 +108,7 @@ ResponseContent ImapRequest::CAPABILITY()
     return rp;
 }
 
-ResponseContent ImapRequest::ENABLE(std::string capability)
+ResponseContent CurlRequest::ENABLE(std::string capability)
 {
     std::string cmd = std::format("ENABLE {}", capability);
     prepareCurlRequest(serverAddress, cmd);
@@ -119,7 +119,7 @@ ResponseContent ImapRequest::ENABLE(std::string capability)
     return rp;
 }
 
-ResponseContent ImapRequest::EXAMINE(std::string folder)
+ResponseContent CurlRequest::EXAMINE(std::string folder)
 {
     folder = QUrl::toPercentEncoding(QString::fromStdString(folder)).toStdString();
     std::string cmd = std::format("EXAMINE {}", folder);
@@ -131,7 +131,7 @@ ResponseContent ImapRequest::EXAMINE(std::string folder)
     return rp;
 }
 
-ResponseContent ImapRequest::LIST(std::string reference, std::string mailbox)
+ResponseContent CurlRequest::LIST(std::string reference, std::string mailbox)
 {
     mailbox = QUrl::toPercentEncoding(QString::fromStdString(mailbox)).toStdString();
     std::string cmd = std::format("LIST {} {}", reference, mailbox);
@@ -143,7 +143,7 @@ ResponseContent ImapRequest::LIST(std::string reference, std::string mailbox)
     return rp;
 }
 
-ResponseContent ImapRequest::FETCH(std::string folder, uint32_t messageindex, std::string item)
+ResponseContent CurlRequest::FETCH(std::string folder, uint32_t messageindex, std::string item)
 {
     folder = QUrl::toPercentEncoding(QString::fromStdString(folder)).toStdString();
     std::string addr = std::format("{}/{}", serverAddress, folder);
@@ -156,7 +156,7 @@ ResponseContent ImapRequest::FETCH(std::string folder, uint32_t messageindex, st
     return rp;
 }
 
-ResponseContent ImapRequest::FETCH_MULTI_MESSAGE(std::string folder, std::string indexRange, std::string item)
+ResponseContent CurlRequest::FETCH_MULTI_MESSAGE(std::string folder, std::string indexRange, std::string item)
 {
     folder = QUrl::toPercentEncoding(QString::fromStdString(folder)).toStdString();
     std::string cmd = std::format("FETCH {} {}", indexRange, item);
@@ -168,7 +168,7 @@ ResponseContent ImapRequest::FETCH_MULTI_MESSAGE(std::string folder, std::string
     return rp;
 }
 
-ResponseContent ImapRequest::UID_FETCH(std::string folder, std::string uid, std::string item)
+ResponseContent CurlRequest::UID_FETCH(std::string folder, std::string uid, std::string item)
 {
     folder = QUrl::toPercentEncoding(QString::fromStdString(folder)).toStdString();
     std::string addr = std::format("{}/{}", serverAddress, folder);
@@ -181,7 +181,7 @@ ResponseContent ImapRequest::UID_FETCH(std::string folder, std::string uid, std:
     return rp;
 }
 
-ResponseContent ImapRequest::UID_SEARCH(std::string folder, std::string item_to_return, std::string criteria)
+ResponseContent CurlRequest::UID_SEARCH(std::string folder, std::string item_to_return, std::string criteria)
 {
     folder = QUrl::toPercentEncoding(QString::fromStdString(folder)).toStdString();
     std::string addr = std::format("{}/{}", serverAddress, folder);

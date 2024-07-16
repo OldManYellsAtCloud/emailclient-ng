@@ -9,31 +9,31 @@ void CurlRequestScheduler::executeRequests()
         ImapCurlRequest request = taskQueue.front();
         switch (request.requestType){
         case ImapRequestType::NOOP:
-            rc = ir->NOOP();
+            rc = cr->NOOP();
             break;
         case ImapRequestType::CAPABILITY:
-            rc = ir->CAPABILITY();
+            rc = cr->CAPABILITY();
             break;
         case ImapRequestType::ENABLE:
-            rc = ir->ENABLE(request.param_s1);
+            rc = cr->ENABLE(request.param_s1);
             break;
         case ImapRequestType::EXAMINE:
-            rc = ir->EXAMINE(request.param_s1);
+            rc = cr->EXAMINE(request.param_s1);
             break;
         case ImapRequestType::LIST:
-            rc = ir->LIST(request.param_s1, request.param_s2);
+            rc = cr->LIST(request.param_s1, request.param_s2);
             break;
         case ImapRequestType::FETCH:
-            rc = ir->FETCH(request.param_s1, request.param_i, request.param_s2);
+            rc = cr->FETCH(request.param_s1, request.param_i, request.param_s2);
             break;
         case ImapRequestType::UID_FETCH:
-            rc = ir->UID_FETCH(request.param_s1, request.param_s2, request.param_s3);
+            rc = cr->UID_FETCH(request.param_s1, request.param_s2, request.param_s3);
             break;
         case ImapRequestType::FETCH_MULTI_MESSAGE:
-            rc = ir->FETCH_MULTI_MESSAGE(request.param_s1, request.param_s2, request.param_s3);
+            rc = cr->FETCH_MULTI_MESSAGE(request.param_s1, request.param_s2, request.param_s3);
             break;
         case ImapRequestType::UID_SEARCH:
-            rc = ir->UID_SEARCH(request.param_s1, request.param_s2, request.param_s3);
+            rc = cr->UID_SEARCH(request.param_s1, request.param_s2, request.param_s3);
             break;
         }
 
@@ -53,8 +53,8 @@ void CurlRequestScheduler::startExecutingThread()
     taskThread.detach();
 }
 
-CurlRequestScheduler::CurlRequestScheduler(ImapRequest *imapRequest) {
-    ir = imapRequest;
+CurlRequestScheduler::CurlRequestScheduler(CurlRequest *curlRequest) {
+    cr = curlRequest;
     MailSettings ms {};
     delayMs = ms.getImapRequestDelay();
 }

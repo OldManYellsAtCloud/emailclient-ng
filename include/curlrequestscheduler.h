@@ -5,7 +5,7 @@
 #include <functional>
 #include <queue>
 #include <thread>
-#include "imap/imaprequest.h"
+#include "imap/curlrequest.h"
 
 enum class ImapRequestType {
     NOOP, CAPABILITY, ENABLE, EXAMINE, LIST, FETCH,
@@ -25,7 +25,7 @@ struct ImapCurlRequest {
 class CurlRequestScheduler
 {
 private:
-    ImapRequest *ir;
+    CurlRequest *cr;
     std::thread taskThread;
     std::atomic_bool engineRunning = false;
     std::queue<ImapCurlRequest> taskQueue;
@@ -36,7 +36,7 @@ private:
     void startExecutingThread();
 
 public:
-    CurlRequestScheduler(ImapRequest* imapRequest);
+    CurlRequestScheduler(CurlRequest* imapRequest);
     void addTask(ImapRequestType requestType, std::function<void(ResponseContent, std::string)> callback, const std::string& cookie = "");
     void addTask(ImapRequestType requestType, std::string param_s, std::function<void(ResponseContent, std::string)> callback, const std::string& cookie = "");
     void addTask(ImapRequestType requestType, uint32_t param_i, std::string param_s1, std::string param_s2, std::function<void(ResponseContent, std::string)> callback, const std::string& cookie = "");

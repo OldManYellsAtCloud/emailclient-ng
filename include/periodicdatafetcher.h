@@ -13,7 +13,7 @@ class PeriodicDataFetcher: public QObject
 private:
     ImapCurlRequest imapCurlRequest;
     ImapFetcher imapFetcher;
-    ImapRequest imapRequest;
+    CurlRequest curlRequest;
     CurlRequestScheduler curlRequestScheduler;
     std::vector<std::string> watchedFolders;
     std::jthread emailFetcherThread;

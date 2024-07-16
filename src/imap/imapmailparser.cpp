@@ -5,8 +5,8 @@
 typedef std::map<std::string, std::string> KvDict;
 
 ImapMailParser::ImapMailParser() {
-    ir = std::make_unique<ImapRequest>();
-    crs = std::make_unique<CurlRequestScheduler>(ir.get());
+    cr = std::make_unique<CurlRequest>();
+    crs = std::make_unique<CurlRequestScheduler>(cr.get());
 }
 
 Mail ImapMailParser::parseImapResponseToMail(ResponseContent rc, const std::string& folder)

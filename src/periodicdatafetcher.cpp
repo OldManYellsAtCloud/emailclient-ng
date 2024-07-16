@@ -2,7 +2,7 @@
 #include "mailsettings.h"
 
 PeriodicDataFetcher::PeriodicDataFetcher():
-    curlRequestScheduler(&imapRequest),
+    curlRequestScheduler(&curlRequest),
     imapFetcher(&curlRequestScheduler, DbManager::getInstance()) {
 
     MailSettings ms{};

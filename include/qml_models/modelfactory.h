@@ -13,7 +13,7 @@ class ModelFactory: public QObject
     QML_ELEMENT
 private:
     CurlRequestScheduler curlRequestScheduler;
-    ImapRequest imapRequest;
+    CurlRequest curlRequest;
     FolderModel folderModel;
     MailModel mailModel;
 
