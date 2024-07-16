@@ -12,7 +12,7 @@ find_package(LogLibrary REQUIRED)
 find_package(SettingsLib REQUIRED)
 find_package(SQLite3 REQUIRED)
 
-set(SOURCES src/imap/imaprequest.cpp
+set(SOURCES src/imap/curlrequest.cpp
             src/imap/curlresponse.cpp
             src/mailsettings.cpp
             src/imap/imapmailparser.cpp
@@ -28,7 +28,7 @@ set(SOURCES src/imap/imaprequest.cpp
             src/periodicdatafetcher.cpp
 )
 
-set(HEADERS include/imap/imaprequest.h
+set(HEADERS include/imap/curlrequest.h
             include/imap/curlresponse.h
             include/imap/imapfetcher.h
             include/mailsettings.h
@@ -64,7 +64,11 @@ qt_add_qml_module(appemailclient
         QML_FILES qml/MailHeader.qml
         QML_FILES qml/MailList.qml
         QML_FILES qml/MailContent.qml
+        QML_FILES qml/AppHeader.qml
 )
+
+qt_add_resources(appemailclient imageResources FILES qml/res/small_refresh_icon.png)
+
 
 
 target_link_libraries(appemailclient
