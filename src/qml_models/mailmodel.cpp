@@ -63,9 +63,15 @@ QHash<int, QByteArray> MailModel::roleNames() const
     return roleNames_m;
 }
 
+QString MailModel::getCurrentFolder()
+{
+    return QString::fromStdString(currentFolder);
+}
+
 void MailModel::switchFolder(QString folder)
 {
     currentFolder = folder.toStdString();
+    emit currentFolderChanged();
     clearList();
 
     std::vector<Mail> newMails = dbManager->getAllMailsFromFolder(currentFolder);

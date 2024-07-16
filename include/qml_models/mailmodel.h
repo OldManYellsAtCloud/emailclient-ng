@@ -18,12 +18,14 @@ private:
 
     void mailArrived();
     void clearList();
+    Q_PROPERTY(QString currentFolder READ getCurrentFolder NOTIFY currentFolderChanged FINAL)
 
 public:
     explicit MailModel(QObject *parent = nullptr);
     int rowCount(const QModelIndex &parent) const override;
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
+    QString getCurrentFolder();
 
     Q_INVOKABLE void switchFolder(QString folder);
     Q_INVOKABLE void prepareMailForOpening(const int &index);
@@ -34,6 +36,9 @@ public:
         dateRole = Qt::UserRole + 2,
         contentPathRole = Qt::UserRole + 3
     };
+
+signals:
+    void currentFolderChanged();
 };
 
 #endif // MAILMODEL_H
