@@ -22,13 +22,6 @@ Window {
         id: periodicDataFetcher
     }
 
-    AppHeader {
-        id: appHeader
-        folder: modelFactory.getMailModel().currentFolder === "" ? qsTr("No Folder Selected") :
-                                                                   modelFactory.getMailModel().currentFolder
-        anchors.top: parent.top
-    }
-
     StackView {
         id: stackView
         anchors.top: appHeader.bottom
@@ -36,6 +29,13 @@ Window {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         initialItem: MailList {}
+    }
+
+    AppHeader {
+        id: appHeader
+        folder: modelFactory.getMailModel().currentFolder === "" ? qsTr("No Folder Selected") :
+                                                                   modelFactory.getMailModel().currentFolder
+        anchors.top: parent.top
     }
 
     Drawer {
