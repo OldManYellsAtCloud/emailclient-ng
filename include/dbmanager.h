@@ -9,10 +9,20 @@
 #include <memory>
 #include <functional>
 
+#define LATEST_DB_VERSION 2
+
 class DbManager
 {
 private:
     std::mutex dbLock;
+
+    const std::string GET_DB_VERSION = "SELECT CASE "
+                                       "(SELECT COUNT(*) FROM settings WHERE key = 'DB_VERSION') "
+                                       "WHEN 0 THEN '1' "
+                                       "ELSE "
+                                       "(SELECT value FROM settings WHERE key = 'DB_VERSION') "
+                                       "END";
+
     const std::string CREATE_MAIL_TABLE = "CREATE TABLE IF NOT EXISTS mails "
                                           "(id INTEGER PRIMARY KEY AUTOINCREMENT, "
                                           "uid INTEGER, "
@@ -34,7 +44,7 @@ private:
     const std::string CREATE_INDEX = "CREATE UNIQUE INDEX IF NOT EXISTS mails_idx on mails(uid, folder)";
 
     const std::string CREATE_SETTINGS_TABLE = "CREATE TABLE IF NOT EXISTS settings "
-                                              "(key TEXT PRIMARY KEY, value TEXT)";
+                                              "(key TEXT PRIMARY KEY, value TEXT);";
 
     const std::string CREATE_FOLDERS_TABLE = "CREATE TABLE IF NOT EXISTS folders "
                                              "(original_name TEXT, readable_name TEXT, "
@@ -65,6 +75,18 @@ private:
     const std::string END_TRANSACTION = "END TRANSACTION;";
     const std::string ROLLBACK_TRANSACTION = "ROLLBACK TRANSACTION;";
 
+    // One full version bump per entry.
+    // Index = version - 1, e.g. index 1 migrates from version 1 to version 2.
+    std::vector<std::vector<std::string>> dbMigrationStatements {
+        {""}, // version 0 -> 1: dummy
+
+        {"ALTER TABLE mails ADD COLUMN sender_name TEXT",
+        "ALTER TABLE mails RENAME COLUMN sender TO sender_email",
+        "UPDATE mails SET sender_name = SUBSTR(sender_email, 0, INSTR(sender_email, '<'))",
+        "UPDATE mails SET sender_email = TRIM(TRIM(SUBSTR(sender_email, INSTR(sender_email, '<')), '<'), '>')",
+        "INSERT INTO settings(key, value) VALUES ('DB_VERSION', '2')"} // version 1->2
+    };
+
 
     std::unique_ptr<MailSettings> mailSettings;
     sqlite3* dbConnection;
@@ -82,8 +104,10 @@ private:
     void initializeConnection();
     void initializeTable(const std::string& statement);
     void initializeTables();
+    void performUpdateAndMigration();
     void prepareStatements();
     void destroyStatements();
+    int getDBVersion();
 
     void storeMailInfo(const struct Mail& mail);
     Mail getMailInfo(const std::string& folder, const uint32_t uid);

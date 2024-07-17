@@ -6,6 +6,7 @@ DbManager::DbManager() {
     mailSettings = std::make_unique<MailSettings>();
     initializeConnection();
     initializeTables();
+    performUpdateAndMigration();
     prepareStatements();
 }
 
@@ -58,6 +59,27 @@ void DbManager::registerFolderCallback(const std::function<void ()> cb)
     folderCallbacks.push_back(cb);
 }
 
+int DbManager::getDBVersion()
+{
+    sqlite3_stmt* dbVersionStatement;
+    int ret = sqlite3_prepare_v2(dbConnection, GET_DB_VERSION.c_str(), -1, &dbVersionStatement, NULL);
+    checkSuccess(ret, SQLITE_OK, "Fatal: could not prepare db-version query.");
+
+    ret = sqlite3_step(dbVersionStatement);
+    checkSuccess(ret, SQLITE_ROW, "Fatal: could not query current db version");
+
+    std::string versionString = reinterpret_cast<const char*>(sqlite3_column_text(dbVersionStatement, 0));
+
+    int version;
+    try {
+        version = stoi(versionString);
+    } catch (std::exception e){
+        ERROR("Could not convert {} to db version. Error: {}", versionString, e.what());
+        throw e;
+    }
+
+    return version;
+}
 
 void DbManager::storeEmail(const Mail &mail)
 {
@@ -402,6 +424,33 @@ void DbManager::initializeTables()
     initializeTable(CREATE_INDEX);
     initializeTable(CREATE_SETTINGS_TABLE);
     initializeTable(CREATE_FOLDERS_TABLE);
+}
+
+void DbManager::performUpdateAndMigration()
+{
+    int currentDbVersion = getDBVersion();
+    if (currentDbVersion == LATEST_DB_VERSION){
+        LOG("Db is already latest version, no migration needed");
+        return;
+    }
+
+    LOG("Performing db migration from version {} to {}", currentDbVersion, LATEST_DB_VERSION);
+
+    int ret;
+
+    for (int i = currentDbVersion; i < dbMigrationStatements.size(); ++i){
+        for (const std::string& statement: dbMigrationStatements[i]){
+            sqlite3_stmt* dbUpdateStatement;
+            ret = sqlite3_prepare_v2(dbConnection, statement.c_str(), -1, &dbUpdateStatement, NULL);
+            checkSuccess(ret, SQLITE_OK, "Fatal: could not prepare migration query: " + statement);
+
+            ret = sqlite3_step(dbUpdateStatement);
+            checkSuccess(ret, SQLITE_DONE, "Fatal: could not execute migration query: " + statement);
+            sqlite3_finalize(dbUpdateStatement);
+        }
+    }
+
+    LOG("Db migration successful");
 }
 
 void DbManager::prepareStatements()
