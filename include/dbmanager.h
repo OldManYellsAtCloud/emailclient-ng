@@ -54,13 +54,13 @@ private:
                                       "VALUES(:original_name, :readable_name)";
     const std::string SELECT_FOLDERS = "SELECT original_name, readable_name from folders";
 
-    const std::string INSERT_MAIL = "INSERT INTO mails(uid, folder, subject, sender, date, read) "
-                                    "VALUES(:uid, :folder, :subject, :sender, :date, :read)";
+    const std::string INSERT_MAIL = "INSERT INTO mails(uid, folder, subject, sender_email, sender_name, date, read) "
+                                    "VALUES(:uid, :folder, :subject, :sender_email, :sender_name, :date, :read)";
     const std::string GET_MAIL_DBID = "SELECT id FROM mails WHERE uid = :uid AND folder = :folder";
     const std::string INSERT_MAILPART = "INSERT INTO mailparts(mail_id, type, name, encoding, content) "
                                         "VALUES(:mail_id, :type, :name, :encoding, :content)";
 
-    const std::string GET_EMAIL = "SELECT uid, folder, subject, sender, date, read FROM "
+    const std::string GET_EMAIL = "SELECT uid, folder, subject, sender_name, sender_email, date, read FROM "
                                   "mails WHERE folder = :folder AND uid = :uid";
     const std::string GET_EMAIL_PARTS = "SELECT mail_id, type, name, encoding, content FROM "
                                         "mailparts WHERE mail_id = :mail_id";
@@ -78,7 +78,7 @@ private:
     // One full version bump per entry.
     // Index = version - 1, e.g. index 1 migrates from version 1 to version 2.
     std::vector<std::vector<std::string>> dbMigrationStatements {
-        {""}, // version 0 -> 1: dummy
+        {}, // version 0 -> 1: dummy
 
         {"ALTER TABLE mails ADD COLUMN sender_name TEXT",
         "ALTER TABLE mails RENAME COLUMN sender TO sender_email",

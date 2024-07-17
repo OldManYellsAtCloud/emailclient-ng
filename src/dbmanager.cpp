@@ -125,9 +125,13 @@ void DbManager::storeMailInfo(const Mail &mail)
                             -1, SQLITE_TRANSIENT);
     checkSuccess(ret, SQLITE_OK, "Could not bind subject to insert mail statement");
 
-    ret = sqlite3_bind_text(insert_mail_statement, getIndex(":sender"), mail.from.c_str(),
+    ret = sqlite3_bind_text(insert_mail_statement, getIndex(":sender_name"), mail.sender_name.c_str(),
                             -1, SQLITE_TRANSIENT);
-    checkSuccess(ret, SQLITE_OK, "Could not bind sender to insert mail statement");
+    checkSuccess(ret, SQLITE_OK, "Could not bind sender_name to insert mail statement");
+
+    ret = sqlite3_bind_text(insert_mail_statement, getIndex(":sender_email"), mail.sender_email.c_str(),
+                            -1, SQLITE_TRANSIENT);
+    checkSuccess(ret, SQLITE_OK, "Could not bind sender_email to insert mail statement");
 
     ret = sqlite3_bind_text(insert_mail_statement, getIndex(":date"), mail.date_string.c_str(),
                             -1, SQLITE_TRANSIENT);
@@ -341,7 +345,6 @@ Mail DbManager::fetchMail(std::string folder, int uid, bool includeContent)
 
     try {
         resetStatementAndClearBindings(get_mail_statement);
-        resetStatementAndClearBindings(get_mailpart_statement);
 
         int ret = sqlite3_bind_text(get_mail_statement, getEmailIndex(":folder"), folder.c_str(), -1, SQLITE_TRANSIENT);
         checkSuccess(ret, SQLITE_OK, "Could not bind folder to get email statement");
@@ -355,14 +358,17 @@ Mail DbManager::fetchMail(std::string folder, int uid, bool includeContent)
         mail.uid = sqlite3_column_int(get_mail_statement, 0);
         mail.folder = folder;
         mail.subject = reinterpret_cast<const char*>(sqlite3_column_text(get_mail_statement, 2));
-        mail.from = reinterpret_cast<const char*>(sqlite3_column_text(get_mail_statement, 3));
-        mail.date_string = reinterpret_cast<const char*>(sqlite3_column_text(get_mail_statement, 4));
+        mail.sender_name = reinterpret_cast<const char*>(sqlite3_column_text(get_mail_statement, 3));
+        mail.sender_email = reinterpret_cast<const char*>(sqlite3_column_text(get_mail_statement, 4));
+        mail.date_string = reinterpret_cast<const char*>(sqlite3_column_text(get_mail_statement, 5));
 
         int dbid = getDbId(mail);
-        ret = sqlite3_bind_int(get_mailpart_statement, getEmailPartIndex(":mail_id"), dbid);
-        checkSuccess(ret, SQLITE_OK, "Could not bind mail_id to get email part statement.");
 
         if (includeContent){
+            resetStatementAndClearBindings(get_mailpart_statement);
+            ret = sqlite3_bind_int(get_mailpart_statement, getEmailPartIndex(":mail_id"), dbid);
+            checkSuccess(ret, SQLITE_OK, "Could not bind mail_id to get email part statement.");
+
             ret = sqlite3_step(get_mailpart_statement);
             checkSuccess(ret, SQLITE_ROW, "Could not execute get mailpart statement");
 

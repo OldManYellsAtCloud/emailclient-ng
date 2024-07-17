@@ -42,10 +42,13 @@ Mail ImapMailParser::parseImapResponseToMail(ResponseContent rc, const std::stri
     if (mailParts.size() == 1 && !boundary.has_value() && mailParts[0].ct == CONTENT_TYPE::OTHER)
         mailParts[0].ct = CONTENT_TYPE::TEXT;
 
+    std::pair<std::string, std::string> senderNameAndEmail = parseSenderNameAndEmail(headerDict[FROM_HEADER_KEY]);
+
     mail.uid = extractUidFromResponse(rc.header.getResponse());
     mail.folder = folder;
     mail.subject = headerDict[SUBJECT_HEADER_KEY];
-    mail.from = headerDict[FROM_HEADER_KEY];
+    mail.sender_name = senderNameAndEmail.first;
+    mail.sender_email = senderNameAndEmail.second;
     mail.date_string = headerDict[DATE_HEADER_KEY];
     mail.parts = mailParts;
 
@@ -357,6 +360,24 @@ std::string ImapMailParser::getAttachmentName(std::map<std::string, std::string>
     size_t end = contentType.find('"', start + 1);
     std::string attachmentName = contentType.substr(start, end - start);
     return attachmentName;
+}
+
+std::pair<std::string, std::string> ImapMailParser::parseSenderNameAndEmail(const std::string &fromHeader)
+{
+    std::pair<std::string, std::string> ret;
+    size_t endOfName = fromHeader.rfind("<");
+    if (endOfName == std::string::npos){
+        ERROR("Could not parse FROM header: {}", fromHeader);
+        return ret;
+    }
+
+    std::string name = fromHeader.substr(0, endOfName - 1);
+    std::string email = fromHeader.substr(endOfName + 1);
+    email = email.substr(0, email.length() - 1);
+
+    ret.first = name;
+    ret.second = email;
+    return ret;
 }
 
 int ImapMailParser::extractUidFromResponse(const std::string &response)

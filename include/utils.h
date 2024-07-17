@@ -32,5 +32,4 @@ std::string extractEncodingTypeFromEncodedString(const std::string& s);
 std::string extractEncodedTextFromString(const std::string& s);
 bool mailHasHTMLPart(const Mail& mail);
 void writeMailToDisk(const Mail& mail, const std::string& folder);
-std::string extractNameFromSender(const std::string& decodedSender);
 #endif // UTILS_H

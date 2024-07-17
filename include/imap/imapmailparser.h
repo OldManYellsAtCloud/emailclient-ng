@@ -68,6 +68,8 @@ private:
     std::optional<std::string> getGlobalContentType(std::map<std::string, std::string>& headerDict);
     std::string getAttachmentName(std::map<std::string, std::string>& headerDict);
 
+    std::pair<std::string, std::string> parseSenderNameAndEmail(const std::string& fromHeader);
+
     int extractUidFromResponse(const std::string& response);
 
 public:
