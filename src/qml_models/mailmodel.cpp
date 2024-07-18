@@ -31,25 +31,16 @@ QVariant MailModel::data(const QModelIndex &index, int role) const
 
     QString ret;
 
-    switch (role){
-    case MailModel::subjectRole:
+    if (role == MailModel::subjectRole){
         ret = QString::fromStdString(decodeSender(mails[index.row()].subject));
-        break;
-    case MailModel::fromRole:
+    } else if (role == MailModel::fromRole){
         ret = QString::fromStdString(decodeSender(mails[index.row()].sender_name));
-        break;
-    case MailModel::dateRole:
+    } else if (role == MailModel::dateRole){
         ret = QString::fromStdString(mails[index.row()].date_string);
-        break;
-    case MailModel::contentPathRole:
-
-        if (mailHasHTMLPart(mails[index.row()]))
-            ret = QString::fromStdString("file://" + tempFolderPath + "/index.html");
-        else
-            ret = QString::fromStdString("file://" + tempFolderPath + "/index.txt");
-
-        break;
-    default:
+    } else if (role == MailModel::contentPathRole){
+        std::string contentExtension = mailHasHTMLPart(mails[index.row()]) ? ".html" : ".txt";
+        ret = QString::fromStdString("file://" + tempFolderPath + contentExtension);
+    } else {
         return QVariant();
     }
 
