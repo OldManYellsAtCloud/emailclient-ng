@@ -1,5 +1,7 @@
 #include "qml_models/foldermodel.h"
 #include <loglibrary.h>
+#include "utils.h"
+
 
 FolderModel::FolderModel() {
     dbManager = DbManager::getInstance();
@@ -20,7 +22,8 @@ QVariant FolderModel::data(const QModelIndex &index, int role) const
     if (index.row() < 0 || index.row() >= folders_m.size() || role != Qt::DisplayRole)
         return QVariant();
 
-    return QString::fromStdString(folders_m[index.row()]);
+    auto decodedFolderName = decodeImapUTF7(folders_m[index.row()]);
+    return QString::fromLatin1(decodedFolderName.data());
 }
 
 void FolderModel::foldersFetched()

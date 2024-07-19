@@ -21,10 +21,11 @@ std::vector<std::string> quoteAwareSplitString(const std::string& s, const std::
 std::string trim(const std::string& s);
 bool isStringEncoded(const std::string& s);
 std::string decodeBase64String(const std::string& s);
+std::basic_string<unsigned char> decodeBase64UnsignedString(const std::string& s);
 std::vector<uint8_t> decodeBase64Data(const std::string& s);
 std::string decodeQuotedPrintableString(const std::string& s, const bool& convertUnderscoreToSpace = false);
 std::vector<uint8_t> decodeQuotedPrintableData(const std::string& s, const bool& convertUnderscoreToSpace = false);
-std::string decodeImapUTF7(const std::string &s);
+std::basic_string<unsigned char> decodeImapUTF7(const std::string &s);
 std::string decodeSender(const std::string &s);
 std::string getImapDateStringFromNDaysAgo(const int& n);
 ENCODING getEncodingType(const std::string& s);

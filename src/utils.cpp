@@ -81,8 +81,18 @@ bool isStringEncoded(const std::string& s){
 
 std::string decodeBase64String(const std::string& s){
     std::vector<uint8_t> decoded = decodeBase64Data(s);
+
+    // remove extra NULL-bytes, then add one back to the end.
+    decoded.erase(std::remove(decoded.begin(), decoded.end(), 0), decoded.end());
+    decoded.push_back(0);
     std::string ret = reinterpret_cast<char*>(decoded.data());
     return ret;
+}
+
+std::basic_string<unsigned char> decodeBase64UnsignedString(const std::string& s){
+    std::string decodedSignedString = decodeBase64String(s);
+    std::basic_string<unsigned char> retval = reinterpret_cast<unsigned char*>(decodedSignedString.data());
+    return retval;
 }
 
 std::vector<uint8_t> decodeBase64Data(const std::string &s)
@@ -140,27 +150,40 @@ std::string getImapDateStringFromNDaysAgo(const int &n)
     return std::format("{:%d-%b-%Y}", dateTarget);
 }
 
-// TODO: look up the RFC, how this supposed to be exactly
-std::string decodeImapUTF7(const std::string &s)
+std::basic_string<unsigned char> decodeImapUTF7(const std::string &s)
 {
     std::vector<uint8_t> out;
+    std::basic_string<unsigned char> retval;
     for (int i = 0; i < s.length(); ++i){
         if (s[i] != '&'){
-            out.push_back(s[i]);
+            retval += s[i];
             continue;
         }
 
-        if (s[i] == '&' && i + 5 > s.length()){
-            out.push_back(s[i]);
+        if (s[i] == '&' && i < s.length() - 1 && s[i] == '-'){
+            retval += '&';
+            ++i;
             continue;
         }
 
-        std::string base64Encoded = s.substr(i + 1, 3);
-        std::vector<uint8_t> fragment = base64::decode_base64(base64Encoded, false);
-        out.insert(out.end(), fragment.begin() + 1, fragment.begin() + 2);
-        i += 4;
+        if (s[i] == '&'){
+            size_t encodedStart = i;
+            size_t encodedEnd = s.find('-', encodedStart);
+            if (encodedEnd == std::string::npos){
+                ERROR("Incorrectly encoded foldername: {}, balking out", s);
+                continue;
+            }
+            std::string encodedPart = s.substr(encodedStart + 1, encodedEnd - encodedStart - 1);
+            // IMAP's UTF7 encoding uses a modified version of base64,
+            // in which '/' characters are sustituted wih ','.
+            // Let's make it a bit more sane by doing it back in the
+            // encoded fragment.
+            std::transform(encodedPart.begin(), encodedPart.end(), encodedPart.begin(), [](const char& c){return c == ',' ? '/' : c;});
+            retval += decodeBase64UnsignedString(encodedPart);
+            i = encodedEnd;
+        }
     }
-    return reinterpret_cast<char*>(out.data());
+    return retval;
 }
 
 
