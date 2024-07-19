@@ -160,7 +160,7 @@ std::basic_string<unsigned char> decodeImapUTF7(const std::string &s)
             continue;
         }
 
-        if (s[i] == '&' && i < s.length() - 1 && s[i] == '-'){
+        if (s[i] == '&' && i < s.length() - 1 && s[i + 1] == '-'){
             retval += '&';
             ++i;
             continue;
