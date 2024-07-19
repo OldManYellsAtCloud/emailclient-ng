@@ -38,8 +38,8 @@ QVariant MailModel::data(const QModelIndex &index, int role) const
     } else if (role == MailModel::dateRole){
         ret = QString::fromStdString(mails[index.row()].date_string);
     } else if (role == MailModel::contentPathRole){
-        std::string contentExtension = mailHasHTMLPart(mails[index.row()]) ? ".html" : ".txt";
-        ret = QString::fromStdString("file://" + tempFolderPath + contentExtension);
+        std::string contentExtension = mailHasHTMLPart(mails[index.row()]) ? "html" : "txt";
+        ret = QString::fromStdString("file://" + tempFolderPath + "/index." + contentExtension);
     } else {
         return QVariant();
     }

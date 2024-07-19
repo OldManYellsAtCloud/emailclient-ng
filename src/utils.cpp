@@ -248,6 +248,11 @@ void writeMailToDisk(const Mail &mail, const std::string& folder)
             if (mailHasHTMLPart(mail)) continue;
             fileName = "index.txt";
             break;
+        case CONTENT_TYPE::OTHER:
+            if (mailPart.name.empty()){
+                fileName = "index.txt";
+                break;
+            } // else fallthrough
         default:
             fileName = mailPart.name;
         }
