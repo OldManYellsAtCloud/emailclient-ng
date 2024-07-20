@@ -59,6 +59,16 @@ void DbManager::registerFolderCallback(const std::function<void ()> cb)
     folderCallbacks.push_back(cb);
 }
 
+std::string DbManager::getReadableFolderName(size_t index)
+{
+    return getFolderName(FolderNameType::READABLE, index);
+}
+
+std::string DbManager::getCanonicalFolderName(size_t index)
+{
+    return getFolderName(FolderNameType::CANONICAL, index);
+}
+
 int DbManager::getDBVersion()
 {
     sqlite3_stmt* dbVersionStatement;
@@ -199,6 +209,31 @@ std::vector<int> DbManager::getAllUidsFromFolder(std::string folder)
     return uids;
 }
 
+std::string DbManager::getFolderName(FolderNameType folderNameType, size_t index)
+{
+    sqlite3_stmt* stmt = folderNameType == FolderNameType::CANONICAL ?
+                             canonical_folder_name_statement : readable_folder_name_statement;
+    resetStatementAndClearBindings(stmt);
+    int ret = sqlite3_bind_int(stmt, 1, index);
+    checkSuccess(ret, SQLITE_OK, "Could not bind foldername offset to folder name query!");
+
+    ret = sqlite3_step(stmt);
+    checkSuccess(ret, SQLITE_ROW, "Could not query folder name!");
+
+    std::string folderName = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+    return folderName;
+}
+
+int DbManager::getFolderCount()
+{
+    resetStatementAndClearBindings(folder_count_statement);
+    int ret = sqlite3_step(folder_count_statement);
+    checkSuccess(ret, SQLITE_ROW, "Fatal: could not count folders");
+
+    int folderCount = sqlite3_column_int(folder_count_statement, 0);
+    return folderCount;
+}
+
 int DbManager::getDbId(const Mail &mail)
 {
     resetStatementAndClearBindings(get_mail_dbid_statement);
@@ -258,7 +293,7 @@ void DbManager::storeFolder(const std::string &original_name, const std::string 
     int ret;
     try {
         resetStatementAndClearBindings(insert_folder_statement);
-        ret = sqlite3_bind_text(insert_folder_statement, getIndex(":original_name"), original_name.c_str(),
+        ret = sqlite3_bind_text(insert_folder_statement, getIndex(":canonical_name"), original_name.c_str(),
                                 -1, SQLITE_TRANSIENT);
         checkSuccess(ret, SQLITE_OK, "Could not bind original name to insert folder statement");
 
@@ -277,34 +312,11 @@ void DbManager::storeFolder(const std::string &original_name, const std::string 
     }
 }
 
-std::vector<std::pair<std::string, std::string>> DbManager::getFolderNames()
-{
-    std::vector<std::pair<std::string, std::string>> folders;
-    int ret;
-    try {
-        resetStatementAndClearBindings(select_folders_statement);
-        ret = sqlite3_step(select_folders_statement);
-        if (ret != SQLITE_OK && ret != SQLITE_DONE && ret != SQLITE_ROW){
-            ERROR("Unexpected error while querying folders: {} - {}", ret, sqlite3_errstr(ret));
-            throw DbException("Could not query folders");
-        }
-
-        while (ret != SQLITE_DONE){
-            std::string original_name = reinterpret_cast<const char*>(sqlite3_column_text(select_folders_statement, 0));
-            std::string readable_name = reinterpret_cast<const char*>(sqlite3_column_text(select_folders_statement, 1));
-            folders.push_back({original_name, readable_name});
-            ret = sqlite3_step(select_folders_statement);
-        }
-    } catch (std::exception e){
-        ERROR("Could not query folders: {}", e.what());
-    }
-    return folders;
-}
 
 bool DbManager::areFoldersCached()
 {
     // if no folders are present in the table... then they are not present.
-    return !getFolderNames().empty();
+    return getFolderCount() > 0;
 }
 
 int DbManager::getLastCachedUid(std::string folder)
@@ -485,11 +497,17 @@ void DbManager::prepareStatements()
     ret = sqlite3_prepare_v2(dbConnection, INSERT_FOLDER.c_str(), -1, &insert_folder_statement, NULL);
     checkSuccess(ret, SQLITE_OK, "Fatal: could not prepare insert folder statement");
 
-    ret = sqlite3_prepare_v2(dbConnection, SELECT_FOLDERS.c_str(), -1, &select_folders_statement, NULL);
-    checkSuccess(ret, SQLITE_OK, "Fatal: could not prepare folder query statement");
-
     ret = sqlite3_prepare_v2(dbConnection, GET_ALL_UIDS_FROM_FOLDER.c_str(), -1, &get_all_uids_from_folder_statement, NULL);
     checkSuccess(ret, SQLITE_OK, "Fatal: could not prepare get-uids-from-folder statement");
+
+    ret = sqlite3_prepare_v2(dbConnection, FOLDER_COUNT.c_str(), -1, &folder_count_statement, NULL);
+    checkSuccess(ret, SQLITE_OK, "Fatal: could not prepare folder-count statement");
+
+    ret = sqlite3_prepare_v2(dbConnection, GET_FOLDER_CANONICAL_NAME.c_str(), -1, &canonical_folder_name_statement, NULL);
+    checkSuccess(ret, SQLITE_OK, "Fatal: could not prepare canonical-foldername statement");
+
+    ret = sqlite3_prepare_v2(dbConnection, GET_FOLDER_READABLE_NAME.c_str(), -1, &readable_folder_name_statement, NULL);
+    checkSuccess(ret, SQLITE_OK, "Fatal: could not prepare readable-foldername statement");
 }
 
 void DbManager::destroyStatements()
@@ -502,8 +520,10 @@ void DbManager::destroyStatements()
     sqlite3_finalize(get_mail_statement);
     sqlite3_finalize(get_mailpart_statement);
     sqlite3_finalize(insert_folder_statement);
-    sqlite3_finalize(select_folders_statement);
     sqlite3_finalize(get_all_uids_from_folder_statement);
+    sqlite3_finalize(folder_count_statement);
+    sqlite3_finalize(canonical_folder_name_statement);
+    sqlite3_finalize(readable_folder_name_statement);
 }
 
 void DbManager::initializeTable(const std::string& statement)

@@ -196,7 +196,7 @@ void ImapFetcher::folderListFetched(ResponseContent rc)
     std::vector<std::string> folders = parseFolderResponse(rc.body.getResponse());
     for (const std::string& folderName: folders){
         // TODO: decode foldername, and store the decoded version alongside the original
-        dbManager->storeFolder(folderName, folderName);
+        dbManager->storeFolder(folderName, reinterpret_cast<char*>(decodeImapUTF7(folderName).data()));
     }
 }
 

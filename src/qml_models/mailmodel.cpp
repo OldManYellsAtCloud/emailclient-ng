@@ -6,7 +6,7 @@
 MailModel::MailModel(QObject *parent)
     : QAbstractListModel{parent}
 {
-    currentFolder = "";
+    currentFolderIndex = -1;
     dbManager = DbManager::getInstance();
     roleNames_m[MailModel::subjectRole] = "subject";
     roleNames_m[MailModel::fromRole] = "from";
@@ -56,16 +56,20 @@ QHash<int, QByteArray> MailModel::roleNames() const
 
 QString MailModel::getCurrentFolder()
 {
-    return QString::fromStdString(currentFolder);
+    if (currentFolderIndex < 0)
+        return QString();
+    return QString::fromLatin1(dbManager->getReadableFolderName(currentFolderIndex).data());
 }
 
-void MailModel::switchFolder(QString folder)
+void MailModel::switchFolder(int folderIndex)
 {
-    currentFolder = folder.toStdString();
+    currentFolderIndex = folderIndex;
     emit currentFolderChanged();
     clearList();
 
-    std::vector<Mail> newMails = dbManager->getAllMailsFromFolder(currentFolder);
+    std::string canonicalFolderName = dbManager->getCanonicalFolderName(currentFolderIndex);
+
+    std::vector<Mail> newMails = dbManager->getAllMailsFromFolder(canonicalFolderName);
     emit beginInsertRows(QModelIndex(), 0, newMails.size() - 1);
     mails = newMails;
     emit endInsertRows();
@@ -88,10 +92,11 @@ void MailModel::prepareMailForOpening(const int &index)
 
 void MailModel::mailArrived()
 {
-    if (currentFolder.empty())
+    if (currentFolderIndex < 0)
         return;
 
-    std::vector<Mail> newMails = dbManager->getAllMailsFromFolder(currentFolder);
+    std::string canonicalFolderName = dbManager->getCanonicalFolderName(currentFolderIndex);
+    std::vector<Mail> newMails = dbManager->getAllMailsFromFolder(canonicalFolderName);
     if (newMails.size() == mails.size())
         return;
 

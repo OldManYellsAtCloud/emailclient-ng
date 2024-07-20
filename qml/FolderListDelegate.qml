@@ -16,9 +16,8 @@ Rectangle {
     MouseArea {
         anchors.fill: parent
         onClicked: {
-            var canonicalName = model.canonicalName;
-            periodicDataFetcher.fetchFolder(canonicalName);
-            modelFactory.getMailModel().switchFolder(canonicalName)
+            periodicDataFetcher.fetchFolder(index)
+            modelFactory.getMailModel().switchFolder(index)
             drawer.close()
         }
     }

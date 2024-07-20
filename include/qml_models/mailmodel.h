@@ -13,7 +13,7 @@ private:
     DbManager* dbManager;
     std::vector<Mail> mails;
     QHash<int, QByteArray> roleNames_m;
-    std::string currentFolder;
+    int currentFolderIndex;
     std::string tempFolderPath;
 
     void mailArrived();
@@ -27,7 +27,7 @@ public:
     QHash<int, QByteArray> roleNames() const override;
     QString getCurrentFolder();
 
-    Q_INVOKABLE void switchFolder(QString folder);
+    Q_INVOKABLE void switchFolder(int folderIndex);
     Q_INVOKABLE void prepareMailForOpening(const int &index);
 
     enum RoleNames {

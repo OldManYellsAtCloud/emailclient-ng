@@ -22,9 +22,15 @@ PeriodicDataFetcher::~PeriodicDataFetcher()
     emailFetcherThread.join();
 }
 
-void PeriodicDataFetcher::fetchFolder(const QString& folder)
+void PeriodicDataFetcher::fetchFolder(const std::string& folder)
 {
-    imapFetcher.fetchNewEmails(folder.toStdString());
+    imapFetcher.fetchNewEmails(folder);
+}
+
+void PeriodicDataFetcher::fetchFolder(const int &index)
+{
+    std::string canonicalFolderName = DbManager::getInstance()->getCanonicalFolderName(index);
+    fetchFolder(canonicalFolderName);
 }
 
 bool PeriodicDataFetcher::getFetchInProgress()

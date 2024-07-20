@@ -9,12 +9,16 @@
 #include <memory>
 #include <functional>
 
-#define LATEST_DB_VERSION 2
+#define LATEST_DB_VERSION 3
 
 class DbManager
 {
 private:
     std::mutex dbLock;
+
+    enum FolderNameType {
+        CANONICAL, READABLE
+    };
 
     const std::string GET_DB_VERSION = "SELECT CASE "
                                        "(SELECT COUNT(*) FROM settings WHERE key = 'DB_VERSION') "
@@ -50,8 +54,8 @@ private:
                                              "(original_name TEXT, readable_name TEXT, "
                                              "UNIQUE(original_name, readable_name))";
 
-    const std::string INSERT_FOLDER = "INSERT INTO folders(original_name, readable_name) "
-                                      "VALUES(:original_name, :readable_name)";
+    const std::string INSERT_FOLDER = "INSERT INTO folders(canonical_name, readable_name) "
+                                      "VALUES(:canonical_name, :readable_name)";
     const std::string SELECT_FOLDERS = "SELECT original_name, readable_name from folders";
 
     const std::string INSERT_MAIL = "INSERT INTO mails(uid, folder, subject, sender_email, sender_name, date, read) "
@@ -71,6 +75,11 @@ private:
     const std::string MAIL_CACHED = "SELECT COUNT(*) FROM mails WHERE folder = :folder and uid = :uid";
     const std::string LAST_UID_FROM_FOLDER = "SELECT COALESCE(MAX(uid), -1) FROM mails WHERE folder = :folder";
 
+    const std::string FOLDER_COUNT = "SELECT COUNT(*) FROM folders";
+    const std::string GET_FOLDER_CANONICAL_NAME = "SELECT canonical_name FROM folders LIMIT 1 OFFSET :offset";
+    const std::string GET_FOLDER_READABLE_NAME = "SELECT readable_name FROM folders LIMIT 1 OFFSET :offset";
+
+
     const std::string BEGIN_TRANSACTION = "BEGIN TRANSACTION;";
     const std::string END_TRANSACTION = "END TRANSACTION;";
     const std::string ROLLBACK_TRANSACTION = "ROLLBACK TRANSACTION;";
@@ -82,9 +91,13 @@ private:
 
         {"ALTER TABLE mails ADD COLUMN sender_name TEXT",
         "ALTER TABLE mails RENAME COLUMN sender TO sender_email",
-        "UPDATE mails SET sender_name = SUBSTR(sender_email, 0, INSTR(sender_email, '<'))",
-        "UPDATE mails SET sender_email = TRIM(TRIM(SUBSTR(sender_email, INSTR(sender_email, '<')), '<'), '>')",
-        "INSERT INTO settings(key, value) VALUES ('DB_VERSION', '2')"} // version 1->2
+        "UPDATE mails SET sender_name = SUBSTR(sender_email, 0, INSTR(sender_email, '<'))", // extract name from sender header
+        "UPDATE mails SET sender_email = TRIM(TRIM(SUBSTR(sender_email, INSTR(sender_email, '<')), '<'), '>')", // extract email from sender header
+        "INSERT INTO settings(key, value) VALUES ('DB_VERSION', '2')"}, // version 1->2
+
+        {"ALTER TABLE folders RENAME COLUMN original_name TO canonical_name",
+         "DELETE FROM folders", // have to pull all folder names again
+         "UPDATE settings SET value = '3' WHERE key = 'DB_VERSION'"} // version 2->3
     };
 
 
@@ -98,8 +111,11 @@ private:
     sqlite3_stmt* get_mail_statement;
     sqlite3_stmt* get_mailpart_statement;
     sqlite3_stmt* insert_folder_statement;
-    sqlite3_stmt* select_folders_statement;
     sqlite3_stmt* get_all_uids_from_folder_statement;
+    sqlite3_stmt* folder_count_statement;
+    sqlite3_stmt* canonical_folder_name_statement;
+    sqlite3_stmt* readable_folder_name_statement;
+
 
     void initializeConnection();
     void initializeTable(const std::string& statement);
@@ -125,6 +141,7 @@ private:
     std::vector<std::function<void(void)>> folderCallbacks;
 
     std::vector<int> getAllUidsFromFolder(std::string folder);
+    std::string getFolderName(FolderNameType folderNameType, size_t index);
 
     DbManager();
 public:
@@ -134,7 +151,6 @@ public:
     bool isMailCached(int uid, std::string folder);
 
     void storeFolder(const std::string& original_name, const std::string& readable_name);
-    std::vector<std::pair<std::string, std::string>> getFolderNames();
     bool areFoldersCached();
 
     int getLastCachedUid(std::string folder);
@@ -143,6 +159,11 @@ public:
 
     void registerMailCallback(const std::function<void(void)> cb);
     void registerFolderCallback(const std::function<void(void)> cb);
+
+    std::string getReadableFolderName(size_t index);
+    std::string getCanonicalFolderName(size_t index);
+
+    int getFolderCount();
 };
 
 #endif // DBMANAGER_H

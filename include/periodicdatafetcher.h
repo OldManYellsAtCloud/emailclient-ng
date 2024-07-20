@@ -31,7 +31,8 @@ private:
 public:
     PeriodicDataFetcher();
     ~PeriodicDataFetcher();
-    Q_INVOKABLE void fetchFolder(const QString& folder);
+    void fetchFolder(const std::string& folder);
+    Q_INVOKABLE void fetchFolder(const int& index);
     bool getFetchInProgress();
 
 public slots:

@@ -21,18 +21,9 @@ public:
     FolderModel();
     int rowCount(const QModelIndex &parent) const override;
     QVariant data(const QModelIndex &index, int role) const override;
-    QHash<int, QByteArray> roleNames() const override;
-
-    enum RoleNames {
-        DisplayRole = Qt::DisplayRole,
-        CanonicalNameRole = Qt::UserRole
-    };
 
 public slots:
     void foldersFetched();
-
-
-
 };
 
 #endif // FOLDERMODEL_H

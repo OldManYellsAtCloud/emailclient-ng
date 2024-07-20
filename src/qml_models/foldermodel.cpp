@@ -1,7 +1,5 @@
 #include "qml_models/foldermodel.h"
 #include <loglibrary.h>
-#include "utils.h"
-
 
 FolderModel::FolderModel() {
     dbManager = DbManager::getInstance();
@@ -13,27 +11,23 @@ FolderModel::FolderModel() {
 
 int FolderModel::rowCount(const QModelIndex &parent) const
 {
-    return folders_m.size();
+    return dbManager->getFolderCount();
 }
 
 QVariant FolderModel::data(const QModelIndex &index, int role) const
 {
     DBG("Data requested for index {}", index.row());
-    if (index.row() < 0 || index.row() >= folders_m.size() || role != Qt::DisplayRole)
+    if (index.row() < 0 || index.row() >= dbManager->getFolderCount() || role != Qt::DisplayRole)
         return QVariant();
 
-    auto decodedFolderName = decodeImapUTF7(folders_m[index.row()]);
-    return QString::fromLatin1(decodedFolderName.data());
+    auto folderName = dbManager->getReadableFolderName(index.row());
+    return QString::fromLatin1(folderName.data());
 }
+
 
 void FolderModel::foldersFetched()
 {
-    std::vector<std::pair<std::string, std::string>> new_folders = dbManager->getFolderNames();
-    std::vector<std::string> folderNames;
-    for (std::pair<std::string, std::string>& folder: new_folders)
-        folderNames.push_back(folder.second);
-
-    emit beginInsertRows(QModelIndex(), 0, new_folders.size() - 1);
-    folders_m = folderNames;
+    int folderCount = dbManager->getFolderCount();
+    emit beginInsertRows(QModelIndex(), 0, folderCount - 1);
     emit endInsertRows();
 }
