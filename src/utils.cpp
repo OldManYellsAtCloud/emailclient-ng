@@ -12,8 +12,8 @@ std::string unquoteString(const std::string& s) {
         return s;
 
     std::string ret = s.substr(1);
-    if (ret[ret.length() - 1] == DOUBLE_QUOTE)
-        ret.erase(ret.length() - 1, 1);
+    if (ret.back() == DOUBLE_QUOTE)
+        ret.pop_back();
 
     return ret;
 }
@@ -64,7 +64,8 @@ std::string trim(const std::string& s){
         ret.erase(0, 1);
 
     while (ret.find_last_of(WHITESPACE_CHARS) == ret.length() - 1)
-        ret.erase(ret.length() - 1, 1);
+        ret.pop_back();
+
     return ret;
 }
 

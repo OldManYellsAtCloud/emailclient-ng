@@ -145,7 +145,7 @@ void ImapMailParser::decodeHeaderValues(std::map<std::string, std::string>& head
             it->second.append(splitValues[i]).append(" ");
         }
 
-        it->second.erase(it->second.length() - 1, 1);
+        it->second.pop_back();
     }
 }
 

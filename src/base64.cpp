@@ -58,9 +58,9 @@ bool inline verify_string_ending(const std::string &string)
     case 0:
         return true;
     case 1:
-        return string[string.length() - 1] == '=';
+        return string.back() == '=';
     case 2:
-        return string[string.length() - 1] == '=' &&
+        return string.back() == '=' &&
                string[string.length() - 2] == '=';
     default:
         return false;
