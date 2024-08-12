@@ -128,8 +128,9 @@ std::pair<std::string, std::string> ImapMailParser::parseHeaderItem(const std::s
         return ret;
     }
     ret.first = header_line.substr(0, key_end);
-    if (key_end < header_line.size() - 3)
-        ret.second = header_line.substr(key_end + 2);
+    if (key_end < header_line.size() - 2)
+        ret.second = trim(header_line.substr(key_end + 1));
+
     return ret;
 }
 
