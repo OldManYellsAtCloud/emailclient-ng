@@ -31,14 +31,6 @@ Window {
         initialItem: MailList {}
     }
 
-    AppHeader {
-        id: appHeader
-        folder: modelFactory.getMailModel().currentFolder === "" ? qsTr("No Folder Selected") :
-                                                                   modelFactory.getMailModel().currentFolder
-        fetchInProgress: periodicDataFetcher.fetchInProgress
-        anchors.top: parent.top
-    }
-
     Drawer {
         id: drawer
         width: 0.66 * parent.width
@@ -61,7 +53,14 @@ Window {
                 text: model.display;
             }
         }
+    }
 
+    AppHeader {
+        id: appHeader
+        folder: modelFactory.getMailModel().currentFolder === "" ? qsTr("No Folder Selected") :
+                                                                   modelFactory.getMailModel().currentFolder
+        fetchInProgress: periodicDataFetcher.fetchInProgress
+        anchors.top: parent.top
     }
 }
 
