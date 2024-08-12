@@ -30,11 +30,16 @@ QVariant MailModel::data(const QModelIndex &index, int role) const
         return QVariant();
 
     QString ret;
+    std::string tmp;
 
     if (role == MailModel::subjectRole){
-        ret = QString::fromStdString(decodeSender(mails[index.row()].subject));
+        tmp = unquoteString(mails[index.row()].subject);
+        tmp = decodeSender(tmp);
+        ret = QString::fromStdString(tmp);
     } else if (role == MailModel::fromRole){
-        ret = QString::fromStdString(decodeSender(mails[index.row()].sender_name));
+        tmp = unquoteString(mails[index.row()].sender_name);
+        tmp = decodeSender(tmp);
+        ret = QString::fromStdString(tmp);
     } else if (role == MailModel::dateRole){
         ret = QString::fromStdString(mails[index.row()].date_string);
     } else if (role == MailModel::contentPathRole){
