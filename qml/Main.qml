@@ -42,7 +42,9 @@ Window {
     Drawer {
         id: drawer
         width: 0.66 * parent.width
-        height: parent.height
+        height: parent.height - appHeader.height
+        y: appHeader.height
+
         Label {
             id: title
             text: "Menu"
@@ -59,6 +61,7 @@ Window {
                 text: model.display;
             }
         }
+
     }
 }
 
