@@ -37,6 +37,8 @@ Window {
         height: parent.height - appHeader.height
         y: appHeader.height
 
+        focus: false
+
         Label {
             id: title
             text: "Menu"
