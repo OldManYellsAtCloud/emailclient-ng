@@ -38,6 +38,7 @@ QVariant MailModel::data(const QModelIndex &index, int role) const
         ret = QString::fromStdString(tmp);
     } else if (role == MailModel::fromRole){
         tmp = unquoteString(mails[index.row()].sender_name);
+        if (tmp.empty()) tmp = mails[index.row()].sender_email;
         tmp = decodeSender(tmp);
         ret = QString::fromStdString(tmp);
     } else if (role == MailModel::dateRole){
