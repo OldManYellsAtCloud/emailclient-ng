@@ -11,12 +11,12 @@ class ImapFetcher
     CurlRequestScheduler* curlRequestScheduler;
     ImapMailParser imapMailParser;
 
-    uint32_t parseUid(const std::string& response);
+    int parseUid(const std::string& response);
     std::string parseFolder(const std::string& response);
 
     int daysToFetch;
     void receiveMinUidAndFetchMissingUids(ResponseContent rc);
-    void fetchMissingUids(std::string folder, uint32_t minUid);
+    void fetchMissingUids(std::string folder, int minUid);
     void receiveMissingUidsAndFetchMails(ResponseContent rc, std::string folder);
     std::vector<int> parseUids(const std::string& response);
     void fetchMissingEmailsByUid(const std::vector<int>& uids, std::string folder);

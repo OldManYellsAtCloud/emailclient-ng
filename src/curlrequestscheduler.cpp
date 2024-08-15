@@ -40,7 +40,7 @@ void CurlRequestScheduler::executeRequests()
 
         request.callback(rc, request.cookie);
         std::this_thread::sleep_for(std::chrono::milliseconds(delayMs)); // rate limit
-        taskQueue.pop();
+        taskQueue.pop_front();
     }
     emit fetchFinished();
     engineRunning = false;
@@ -61,89 +61,9 @@ CurlRequestScheduler::CurlRequestScheduler(CurlRequest *curlRequest) {
     delayMs = ms.getImapRequestDelay();
 }
 
-void CurlRequestScheduler::addTask(ImapRequestType requestType, std::function<void (ResponseContent, std::string)> callback, const std::string& cookie)
+void CurlRequestScheduler::addTask(ImapCurlRequest request)
 {
-    if (requestType != ImapRequestType::NOOP && requestType != ImapRequestType::CAPABILITY){
-        throw std::runtime_error("Incorrect requestType. Only NOOP and CAPABILITY take no argument");
-    }
-
-    ImapCurlRequest request = {
-        .requestType = requestType,
-        .callback = callback,
-        .cookie = cookie
-    };
-    taskQueue.push(request);
+    taskQueue.push_back(request);
     startExecutingThread();
 }
-
-void CurlRequestScheduler::addTask(ImapRequestType requestType, std::string param_s, std::function<void (ResponseContent, std::string)> callback, const std::string& cookie)
-{
-    if (requestType != ImapRequestType::ENABLE && requestType != ImapRequestType::EXAMINE){
-        throw std::runtime_error("Incorrect requestType. Only ENABLE and EXAMINE take 1 string argument");
-    }
-
-    ImapCurlRequest request = {
-        .requestType = requestType,
-        .param_s1 = param_s,
-        .callback = callback,
-        .cookie = cookie
-    };
-    taskQueue.push(request);
-    startExecutingThread();
-}
-
-void CurlRequestScheduler::addTask(ImapRequestType requestType, uint32_t param_i, std::string param_s1, std::string param_s2, std::function<void (ResponseContent, std::string)> callback, const std::string& cookie)
-{
-    if (requestType != ImapRequestType::FETCH && requestType != ImapRequestType::UID_FETCH){
-        throw std::runtime_error("Incorrect requestType. Only FETCH takes 2 string and 1 int arguments.");
-    }
-
-    ImapCurlRequest request = {
-        .requestType = requestType,
-        .param_s1 = param_s1,
-        .param_s2 = param_s2,
-        .param_i = param_i,
-        .callback = callback,
-        .cookie = cookie
-    };
-    taskQueue.push(request);
-    startExecutingThread();
-}
-
-void CurlRequestScheduler::addTask(ImapRequestType requestType, std::string param_s1, std::string param_s2, std::function<void (ResponseContent, std::string)> callback, const std::string& cookie)
-{
-    if (requestType != ImapRequestType::LIST){
-        throw std::runtime_error("Incorrect requestType. Only LIST takes 2 string arguments");
-    }
-
-    ImapCurlRequest request = {
-        .requestType = requestType,
-        .param_s1 = param_s1,
-        .param_s2 = param_s2,
-        .callback = callback,
-        .cookie = cookie
-    };
-    taskQueue.push(request);
-    startExecutingThread();
-}
-
-void CurlRequestScheduler::addTask(ImapRequestType requestType, std::string param_s1, std::string param_s2, std::string param_s3, std::function<void(ResponseContent, std::string)> callback, const std::string& cookie)
-{
-    if (requestType != ImapRequestType::FETCH_MULTI_MESSAGE && requestType != ImapRequestType::UID_SEARCH
-        && requestType != ImapRequestType::UID_FETCH){
-        throw std::runtime_error("Incorrect requestType. Only FETCH_MULTI_MESSAGE, UID_SEARCH and UID_FETCH take 3 string arguments");
-    }
-
-    ImapCurlRequest request = {
-        .requestType = requestType,
-        .param_s1 = param_s1,
-        .param_s2 = param_s2,
-        .param_s3 = param_s3,
-        .callback = callback,
-        .cookie = cookie
-    };
-    taskQueue.push(request);
-    startExecutingThread();
-}
-
 

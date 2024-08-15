@@ -3,14 +3,14 @@
 
 #include <atomic>
 #include <functional>
-#include <queue>
+#include <deque>
 #include <thread>
 #include "imap/curlrequest.h"
 
 #include <QObject>
 
-enum class ImapRequestType {
-    NOOP, CAPABILITY, ENABLE, EXAMINE, LIST, FETCH,
+enum ImapRequestType {
+    NOOP = 0, CAPABILITY, ENABLE, EXAMINE, LIST, FETCH,
     FETCH_MULTI_MESSAGE, UID_FETCH, UID_SEARCH
 };
 
@@ -22,6 +22,14 @@ struct ImapCurlRequest {
     uint32_t param_i;
     std::function<void(ResponseContent, std::string)> callback;
     std::string cookie;
+
+    // comparison operator to be able to compare priority when pushing
+    // tasks into priority queue - e.g. fetching mail has lower priority than
+    // fetching missing UIDs.
+    constexpr auto operator<=>(const ImapCurlRequest& other) const{
+        return other.requestType <=> requestType;
+    }
+
 };
 
 class CurlRequestScheduler: public QObject
@@ -31,7 +39,8 @@ private:
     CurlRequest *cr;
     std::thread taskThread;
     std::atomic_bool engineRunning = false;
-    std::queue<ImapCurlRequest> taskQueue;
+    std::deque<ImapCurlRequest> taskQueue;
+    //std::priority_queue<ImapCurlRequest> taskQueue;
 
     int delayMs;
 
@@ -40,11 +49,43 @@ private:
 
 public:
     CurlRequestScheduler(CurlRequest* imapRequest);
-    void addTask(ImapRequestType requestType, std::function<void(ResponseContent, std::string)> callback, const std::string& cookie = "");
-    void addTask(ImapRequestType requestType, std::string param_s, std::function<void(ResponseContent, std::string)> callback, const std::string& cookie = "");
-    void addTask(ImapRequestType requestType, uint32_t param_i, std::string param_s1, std::string param_s2, std::function<void(ResponseContent, std::string)> callback, const std::string& cookie = "");
-    void addTask(ImapRequestType requestType, std::string param_s1, std::string param_s2, std::function<void(ResponseContent, std::string)> callback, const std::string& cookie = "");
-    void addTask(ImapRequestType requestType, std::string param_s1, std::string param_s2, std::string param_s3, std::function<void(ResponseContent, std::string)> callback, const std::string& cookie = "");
+
+    template<typename... T>
+    ImapCurlRequest createTask(ImapRequestType requestType, std::function<void(ResponseContent, std::string)> callback,
+                               const std::string& cookie, T&&... params){
+        ImapCurlRequest task = {};
+
+        int stringCounter = 0;
+
+        ([&]{
+            switch(++stringCounter){
+            case 1:
+                task.param_s1 = params;
+                break;
+            case 2:
+                task.param_s2 = params;
+                break;
+            case 3:
+                task.param_s3 = params;
+            }
+        }(), ...);
+
+        task.requestType = requestType;
+        task.callback = callback;
+        task.cookie = cookie;
+
+        return std::move(task);
+    }
+
+    template<typename... T>
+    ImapCurlRequest createTask(ImapRequestType requestType, std::function<void(ResponseContent, std::string)> callback,
+                               const std::string& cookie, uint32_t param_i, T&&... params){
+        ImapCurlRequest task = createTask(requestType, callback, cookie, params...);
+        task.param_i = param_i;
+        return std::move(task);
+    }
+
+    void addTask(ImapCurlRequest request);
 
 signals:
     void fetchStarted();

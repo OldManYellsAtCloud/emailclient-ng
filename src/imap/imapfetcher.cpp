@@ -16,14 +16,14 @@ void ImapFetcher::registerMailCallback(std::function<void ()> cb)
     mailCallbacks.push_back(cb);
 }
 
-
-
 void ImapFetcher::getLastUid(std::string folder)
 {
     auto callback = [&](ResponseContent rc, std::string dummy){
         this->lastUidFetched(rc);
     };
-    curlRequestScheduler->addTask(ImapRequestType::UID_SEARCH, folder, "MAX", "ALL", callback);
+    std::string cookie = "";
+    ImapCurlRequest request = curlRequestScheduler->createTask(ImapRequestType::UID_SEARCH, callback, cookie, folder, "MAX", "ALL");
+    curlRequestScheduler->addTask(std::move(request));
 }
 
 void ImapFetcher::lastUidFetched(ResponseContent rc)
@@ -33,13 +33,18 @@ void ImapFetcher::lastUidFetched(ResponseContent rc)
 
 void ImapFetcher::fetchNewEmails(std::string folder)
 {
+    LOG("Step 1 - fetch new emails. Folder: {}", folder);
     int firstUid = dbManager->getLastCachedUid(folder);
+    DBG("Last cached UID: {}", firstUid);
+
     if (firstUid <= 0 ){
         std::string startingDate = getImapDateStringFromNDaysAgo(daysToFetch);
         auto callback = [&](ResponseContent rc, std::string dummy){
             this->receiveMinUidAndFetchMissingUids(rc);
         };
-        curlRequestScheduler->addTask(ImapRequestType::UID_SEARCH, folder, "MIN", std::format("SINCE {}", startingDate), callback);
+        std::string cookie = "";
+        ImapCurlRequest request = curlRequestScheduler->createTask(ImapRequestType::UID_SEARCH, callback, cookie, folder, "MIN", std::format("SINCE {}", startingDate));
+        curlRequestScheduler->addTask(std::move(request));
     } else {
         fetchMissingUids(folder, ++firstUid);
     }
@@ -54,10 +59,13 @@ void ImapFetcher::fetchFoldersIfNeeded()
         this->folderListFetched(rc);
     };
 
-    curlRequestScheduler->addTask(ImapRequestType::LIST, "\"\"", "*", callback, "");
+    std::string cookie = "";
+
+    ImapCurlRequest request = curlRequestScheduler->createTask(ImapRequestType::LIST, callback, cookie, "\"\"", "*");
+    curlRequestScheduler->addTask(request);
 }
 
-uint32_t ImapFetcher::parseUid(const std::string &response)
+int ImapFetcher::parseUid(const std::string &response)
 {
     const std::string SEARCH_RESULT = "ESEARCH (TAG";
     std::vector<std::string> splitResponse = splitString(response, CRLF);
@@ -70,11 +78,11 @@ uint32_t ImapFetcher::parseUid(const std::string &response)
         std::vector<std::string> splitLine = splitString(s, SPACE);
         try {
             uid = std::stoi(splitLine[splitLine.size() - 1]);
-            break;
         } catch (std::exception e){
             ERROR("Could not parse uid: {} : {}", s, e.what());
-            break;
         }
+
+        break;
     }
     return uid;
 }
@@ -97,21 +105,26 @@ std::string ImapFetcher::parseFolder(const std::string &response)
 
 void ImapFetcher::receiveMinUidAndFetchMissingUids(ResponseContent rc)
 {
-    uint32_t minUid = parseUid(rc.header.getResponse());
+    LOG("Step 1b - Receive minimum UID from server");
+    int minUid = parseUid(rc.header.getResponse());
     std::string folder = parseFolder(rc.header.getResponse());
     fetchMissingUids(folder, minUid);
 }
 
-void ImapFetcher::fetchMissingUids(std::string folder, uint32_t minUid)
+void ImapFetcher::fetchMissingUids(std::string folder, int minUid)
 {
+    LOG("Step 2 - Fetch missing UIDs. Folder: {}, minUid: {}", folder, minUid);
     auto callback = [&](ResponseContent rc, std::string folder){
         this->receiveMissingUidsAndFetchMails(rc, folder);
     };
-    curlRequestScheduler->addTask(ImapRequestType::UID_FETCH, folder, std::format("{}:*", minUid), "UID", callback, folder);
+    ImapCurlRequest request = curlRequestScheduler->createTask(ImapRequestType::UID_FETCH, std::move(callback),
+                                                               folder, folder, std::format("{}:*", minUid), "UID");
+    curlRequestScheduler->addTask(std::move(request));
 }
 
 void ImapFetcher::receiveMissingUidsAndFetchMails(ResponseContent rc, std::string folder)
 {
+    LOG("Step 3 - Receive missing UIDs and prepare fetching mails");
     std::vector<int> uids = parseUids(rc.header.getResponse());
     LOG("UID response: {}", rc.header.getResponse());
     filterOutOldUids(uids, folder);
@@ -146,18 +159,21 @@ std::vector<int> ImapFetcher::parseUids(const std::string &response)
 
 void ImapFetcher::fetchMissingEmailsByUid(const std::vector<int> &uids, std::string folder)
 {
+    LOG("Step 4 - Prepare fetching missing emails by UID");
     auto callback = [&](ResponseContent rc, std::string folder){
         this->parseAndStoreEmail(rc, folder);
     };
 
     for (const int& uid: uids) {
-        curlRequestScheduler->addTask(ImapRequestType::UID_FETCH, folder, std::to_string(uid),
-                                      "BODY.PEEK[]", callback, folder);
+        ImapCurlRequest request = curlRequestScheduler->createTask(ImapRequestType::UID_FETCH, callback, folder, folder, std::to_string(uid),
+                                                                   "BODY.PEEK[]");
+        curlRequestScheduler->addTask(request);
     }
 }
 
 void ImapFetcher::parseAndStoreEmail(ResponseContent rc, std::string folder)
 {
+    LOG("Step 5 - Store newly fetched email");
     Mail mail = imapMailParser.parseImapResponseToMail(rc, folder);
     dbManager->storeEmail(mail);
 
