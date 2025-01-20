@@ -1,4 +1,4 @@
-#include <loglibrary.h>
+#include <loglib/loglib.h>
 #include "mailmodel.h"
 #include "utils.h"
 #include "mailsettings.h"
@@ -50,7 +50,7 @@ QVariant MailModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
-    DBG("MailModel - Returning data: {}", ret.toStdString());
+    LOG_DEBUG_F("MailModel - Returning data: {}", ret.toStdString());
 
     return ret;
 }

@@ -6,7 +6,7 @@
 
 #include "qml_models/modelfactory.h"
 #include "periodicdatafetcher.h"
-#include <loglibrary.h>
+#include <loglib/loglib.h>
 
 
 
@@ -19,32 +19,35 @@ void checkProcessOwner(int argc, char *argv[]){
     std::string currentUserName {currentUser->pw_name};
 
     if (currentUserName.compare(applicationUser) != 0){
-        LOG("Running with incorrect user: {} Attempting to switch to application user.", currentUserName);
+        LOG_INFO_F("Running with incorrect user: {} Attempting to switch to application user.", currentUserName);
         auto appUserUid = getpwnam(applicationUser.c_str());
 
         if (!appUserUid){
-            ERROR("Could not find application user! Error: {}", strerror(errno));
+            LOG_ERROR_F("Could not find application user! Error: {}", strerror(errno));
             exit(1);
         }
 
         if (setgid(appUserUid->pw_gid) < 0){
-            ERROR("Could not set GID to application user's group! Error: {}", strerror(errno));
+            LOG_ERROR_F("Could not set GID to application user's group! Error: {}", strerror(errno));
             exit(1);
         }
 
         if(setuid(appUserUid->pw_uid) < 0){
-            ERROR("Could not set UID to application user! Error: {}", strerror(errno));
+            LOG_ERROR_F("Could not set UID to application user! Error: {}", strerror(errno));
             exit(1);
         }
 
         execv(argv[0], argv);
     } else {
-        LOG("Already running as application user.");
+        LOG_INFO("Already running as application user.");
     }
 }
 
 int main(int argc, char *argv[])
 {
+    loglib::logger().setName("emailclient");
+    loglib::logger().registerLogger(logging::LOGGER_FILE);
+
     checkProcessOwner(argc, argv);
     qmlRegisterType<ModelFactory>("sgy.gspine.mail", 1, 0, "ModelFactory");
     qmlRegisterType<PeriodicDataFetcher>("sgy.gspine.mail", 1, 0, "PeriodicDataFetcher");

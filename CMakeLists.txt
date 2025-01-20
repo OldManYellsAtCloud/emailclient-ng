@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt6 6.4 REQUIRED COMPONENTS Quick WebEngineQuick Network)
 find_package(CURL REQUIRED)
-find_package(LogLibrary REQUIRED)
+find_package(loglib REQUIRED)
 find_package(SettingsLib REQUIRED)
 find_package(SQLite3 REQUIRED)
 
@@ -72,7 +72,7 @@ qt_add_resources(appemailclient imageResources FILES qml/res/small_refresh_icon.
 
 
 target_link_libraries(appemailclient
-    PRIVATE Qt6::Quick curl SettingsLib LogLibrary SQLite::SQLite3 Qt6::WebEngineQuick Qt6::Network
+    PRIVATE Qt6::Quick curl SettingsLib loglib SQLite::SQLite3 Qt6::WebEngineQuick Qt6::Network
 )
 
 target_include_directories(appemailclient PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

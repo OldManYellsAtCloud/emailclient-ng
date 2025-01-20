@@ -1,5 +1,5 @@
 #include "imap/imapmailparser.h"
-#include "loglibrary.h"
+#include <loglib/loglib.h>
 #include "utils.h"
 
 typedef std::map<std::string, std::string> KvDict;
@@ -66,7 +66,7 @@ std::map<std::string, std::string> ImapMailParser::extractAndParseHeader(const s
 std::string ImapMailParser::getHeader(const std::string& mailResponse){
     size_t end = mailResponse.find(DOUBLE_CRLF);
     if (end == std::string::npos){
-        ERROR("Could not find end of header: {}...", mailResponse.substr(0, 100));
+        LOG_ERROR_F("Could not find end of header: {}...", mailResponse.substr(0, 100));
         return "?N/A?";
     }
 
@@ -83,7 +83,7 @@ std::string ImapMailParser::getNormalizedHeader(const std::string &mailResponse)
 std::string ImapMailParser::getBody(const std::string& mailResponse){
     size_t start = mailResponse.find(DOUBLE_CRLF);
     if (start == std::string::npos){
-        ERROR("Could not find end of header: {}...", mailResponse.substr(0, 100));
+        LOG_ERROR_F("Could not find end of header: {}...", mailResponse.substr(0, 100));
         return "?N/A?";
     }
 
@@ -124,7 +124,7 @@ std::pair<std::string, std::string> ImapMailParser::parseHeaderItem(const std::s
     std::pair<std::string, std::string> ret {"", ""};
 
     if (key_end == std::string::npos){
-        DBG("Not a valid header item: {}", header_line);
+        LOG_DEBUG_F("Not a valid header item: {}", header_line);
         return ret;
     }
     ret.first = header_line.substr(0, key_end);
@@ -368,7 +368,7 @@ std::pair<std::string, std::string> ImapMailParser::parseSenderNameAndEmail(cons
     std::pair<std::string, std::string> ret;
     size_t endOfName = fromHeader.rfind("<");
     if (endOfName == std::string::npos){
-        ERROR("Could not parse FROM header: {}", fromHeader);
+        LOG_ERROR_F("Could not parse FROM header: {}", fromHeader);
         return ret;
     }
 
@@ -394,7 +394,7 @@ int ImapMailParser::extractUidFromResponse(const std::string &response)
             try {
                 ret = std::stoi(uid_s);
             } catch (std::exception e){
-                ERROR("Could not extract uid from {}: {}", line, e.what());
+                LOG_ERROR_F("Could not extract uid from {}: {}", line, e.what());
             }
             break;
         }

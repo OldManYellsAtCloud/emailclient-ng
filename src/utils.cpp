@@ -3,7 +3,7 @@
 #include <utils.h>
 
 #include "base64.h"
-#include "loglibrary.h"
+#include <loglib/loglib.h>
 #include <filesystem>
 #include <fstream>
 
@@ -125,7 +125,7 @@ std::vector<uint8_t> decodeQuotedPrintableData(const std::string &s, const bool 
                     c = std::stoi(hextmp, 0, 16);
                     vec.push_back(c);
                 } catch (std::exception e){
-                    ERROR("Could not convert to hexadecimal number: {}", hextmp);
+                    LOG_ERROR_F("Could not convert to hexadecimal number: {}", hextmp);
                 }
             }
             i += 2;
@@ -171,7 +171,7 @@ std::basic_string<unsigned char> decodeImapUTF7(const std::string &s)
             size_t encodedStart = i;
             size_t encodedEnd = s.find('-', encodedStart);
             if (encodedEnd == std::string::npos){
-                ERROR("Incorrectly encoded foldername: {}, balking out", s);
+                LOG_ERROR_F("Incorrectly encoded foldername: {}, balking out", s);
                 continue;
             }
             std::string encodedPart = s.substr(encodedStart + 1, encodedEnd - encodedStart - 1);

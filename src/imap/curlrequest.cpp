@@ -1,5 +1,5 @@
 #include "imap/curlrequest.h"
-#include <loglibrary.h>
+#include <loglib/loglib.h>
 #include <thread>
 
 #include <QUrl> // for percent encoding
@@ -16,7 +16,7 @@ void CurlRequest::waitForRateLimit()
 
     if (diffSinceLastRequest.count() < requestDelayMs) {
         auto sleepBeforeNextRequest = requestDelayMs - diffSinceLastRequest.count();
-        DBG("Rate limit, sleep {}ms", sleepBeforeNextRequest);
+        LOG_DEBUG_F("Rate limit, sleep {}ms", sleepBeforeNextRequest);
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepBeforeNextRequest));
     }
 }
@@ -44,7 +44,7 @@ void CurlRequest::prepareCurlRequest(const std::string& url, const std::string& 
 {
     header.reset();
     body.reset();
-    LOG("Preparing request with url: {}, command: {}", url, customRequest);
+    LOG_INFO_F("Preparing request with url: {}, command: {}", url, customRequest);
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &body);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, storeCurlData);
@@ -81,8 +81,8 @@ CURLcode CurlRequest::performCurlRequest()
     lastRequestTime = std::chrono::steady_clock::now();
 
     auto res = curl_easy_perform(curl);
-    DBG("Body response: {}", body.getResponse().substr(0, 1000));
-    DBG("Header response: {}", header.getResponse().substr(0, 1000));
+    LOG_DEBUG_F("Body response: {}", body.getResponse().substr(0, 1000));
+    LOG_DEBUG_F("Header response: {}", header.getResponse().substr(0, 1000));
 
     return res;
 }

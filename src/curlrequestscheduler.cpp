@@ -1,12 +1,12 @@
 #include "curlrequestscheduler.h"
-#include <loglibrary.h>
+#include <loglib/loglib.h>
 
 void CurlRequestScheduler::executeRequests()
 {
     emit fetchStarted();
     ResponseContent rc;
     while (!taskQueue.empty()){
-        LOG("Taskqueue size: {}", taskQueue.size());
+        LOG_INFO_F("Taskqueue size: {}", taskQueue.size());
         ImapCurlRequest request = taskQueue.front();
         switch (request.requestType){
         case ImapRequestType::NOOP:

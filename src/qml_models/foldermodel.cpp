@@ -1,5 +1,5 @@
 #include "qml_models/foldermodel.h"
-#include <loglibrary.h>
+#include <loglib/loglib.h>
 
 FolderModel::FolderModel() {
     dbManager = DbManager::getInstance();
@@ -16,7 +16,7 @@ int FolderModel::rowCount(const QModelIndex &parent) const
 
 QVariant FolderModel::data(const QModelIndex &index, int role) const
 {
-    DBG("Data requested for index {}", index.row());
+    LOG_DEBUG_F("Data requested for index {}", index.row());
     if (index.row() < 0 || index.row() >= dbManager->getFolderCount() || role != Qt::DisplayRole)
         return QVariant();
 

@@ -1,5 +1,5 @@
 #include "dbmanager.h"
-#include <loglibrary.h>
+#include <loglib/loglib.h>
 #include "dbexception.h"
 
 DbManager::DbManager() {
@@ -33,7 +33,7 @@ DbManager::~DbManager()
 void DbManager::checkSuccess(int result, int expected_result, std::string info)
 {
     if (result != expected_result){
-        ERROR("SQLITE ERROR - {} - {}: {}", info, result, sqlite3_errstr(result));
+        LOG_ERROR_F("SQLITE ERROR - {} - {}: {}", info, result, sqlite3_errstr(result));
         std::string err = std::format("SQLITE ERROR - {} - {}: {}", info, result, sqlite3_errstr(result));
         throw DbException(err);
     }
@@ -43,7 +43,7 @@ int DbManager::getParameterIndex(sqlite3_stmt *stmt, std::string parameter_name)
 {
     int ret = sqlite3_bind_parameter_index(stmt, parameter_name.c_str());
     if (ret == 0){
-        ERROR("Could not find the following parameter in statement: {}", parameter_name);
+        LOG_ERROR_F("Could not find the following parameter in statement: {}", parameter_name);
         throw DbException("Missing parameter in prepared statement!");
     }
     return ret;
@@ -84,7 +84,7 @@ int DbManager::getDBVersion()
     try {
         version = stoi(versionString);
     } catch (std::exception e){
-        ERROR("Could not convert {} to db version. Error: {}", versionString, e.what());
+        LOG_ERROR_F("Could not convert {} to db version. Error: {}", versionString, e.what());
         throw e;
     }
 
@@ -108,7 +108,7 @@ void DbManager::storeEmail(const Mail &mail)
             cb();
 
     } catch (DbException e){
-        ERROR("Unsuccessful transaction: {}", e.what());
+        LOG_ERROR_F("Unsuccessful transaction: {}", e.what());
 
         ret = sqlite3_exec(dbConnection, ROLLBACK_TRANSACTION.c_str(), NULL, NULL, NULL);
         checkSuccess(ret, SQLITE_OK, "Fatal: Could not rollback failed transaction");
@@ -157,7 +157,7 @@ void DbManager::storeMailInfo(const Mail &mail)
 void DbManager::storeMailParts(const Mail &mail)
 {
     int dbid = getDbId(mail);
-    LOG("Mail ID: {}", dbid);
+    LOG_INFO_F("Mail ID: {}", dbid);
 
     auto getIndex = [&](const std::string& param_name)->int {
         return getParameterIndex(insert_mailpart_statement, param_name.c_str());
@@ -178,7 +178,7 @@ void DbManager::storeMailParts(const Mail &mail)
         checkSuccess(ret, SQLITE_OK, "Could not bind name to mailpart insertion statement");
 
         ret = sqlite3_bind_int(insert_mailpart_statement, getIndex(":encoding"), mp.enc);
-        checkSuccess(ret, SQLITE_OK, "Could not bind encoding to mailpart insetion statement");
+        checkSuccess(ret, SQLITE_OK, "Could not bind encoding to mailpart insertion statement");
 
         ret = sqlite3_bind_text(insert_mailpart_statement, getIndex(":content"), mp.content.c_str(),
                                 -1, SQLITE_TRANSIENT);
@@ -277,7 +277,7 @@ bool DbManager::isMailCached(int uid, std::string folder)
         checkSuccess(ret, SQLITE_ROW, "Could not execute mail-cached statement");
         row_num = sqlite3_column_int(is_mail_cached_statement, 1);
     } catch (DbException e){
-        ERROR("Could not count mails. Uid: {}, folder: {}, Error: {}",
+        LOG_ERROR_F("Could not count mails. Uid: {}, folder: {}, Error: {}",
               uid, folder, e.what());
     }
 
@@ -308,7 +308,7 @@ void DbManager::storeFolder(const std::string &original_name, const std::string 
             cb();
 
     } catch (std::exception e){
-        ERROR("Could not insert folder name in db: {}", e.what());
+        LOG_ERROR_F("Could not insert folder name in db: {}", e.what());
     }
 }
 
@@ -337,7 +337,7 @@ int DbManager::getLastCachedUid(std::string folder)
 
         lastUid = sqlite3_column_int(get_last_cached_uid_statement, 0);
     } catch (std::exception e){
-        ERROR("Could not get last cached uid: {}", e.what());
+        LOG_ERROR_F("Could not get last cached uid: {}", e.what());
     }
     return lastUid;
 }
@@ -401,7 +401,7 @@ Mail DbManager::fetchMail(std::string folder, int uid, bool includeContent)
 
     } catch (std::exception e){
         mail = {0};
-        ERROR("Could not gather mail from database: {}", e.what());
+        LOG_ERROR_F("Could not gather mail from database: {}", e.what());
     }
     return mail;
 }
@@ -448,11 +448,11 @@ void DbManager::performUpdateAndMigration()
 {
     int currentDbVersion = getDBVersion();
     if (currentDbVersion == LATEST_DB_VERSION){
-        LOG("Db is already latest version, no migration needed");
+        LOG_INFO("Db is already latest version, no migration needed");
         return;
     }
 
-    LOG("Performing db migration from version {} to {}", currentDbVersion, LATEST_DB_VERSION);
+    LOG_INFO_F("Performing db migration from version {} to {}", currentDbVersion, LATEST_DB_VERSION);
 
     int ret;
 
@@ -468,7 +468,7 @@ void DbManager::performUpdateAndMigration()
         }
     }
 
-    LOG("Db migration successful");
+    LOG_INFO("Db migration successful");
 }
 
 void DbManager::prepareStatements()

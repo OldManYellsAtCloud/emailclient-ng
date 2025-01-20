@@ -1,5 +1,5 @@
 #include "imap/imapfetcher.h"
-#include <loglibrary.h>
+#include <loglib/loglib.h>
 #include "utils.h"
 
 ImapFetcher::ImapFetcher(CurlRequestScheduler *crs, DbManager* dm)
@@ -28,14 +28,14 @@ void ImapFetcher::getLastUid(std::string folder)
 
 void ImapFetcher::lastUidFetched(ResponseContent rc)
 {
-    LOG("UID response arrived: {}", parseUid(rc.header.getResponse()));
+    LOG_INFO_F("UID response arrived: {}", parseUid(rc.header.getResponse()));
 }
 
 void ImapFetcher::fetchNewEmails(std::string folder)
 {
-    LOG("Step 1 - fetch new emails. Folder: {}", folder);
+    LOG_INFO_F("Step 1 - fetch new emails. Folder: {}", folder);
     int firstUid = dbManager->getLastCachedUid(folder);
-    DBG("Last cached UID: {}", firstUid);
+    LOG_DEBUG_F("Last cached UID: {}", firstUid);
 
     if (firstUid <= 0 ){
         std::string startingDate = getImapDateStringFromNDaysAgo(daysToFetch);
@@ -79,7 +79,7 @@ int ImapFetcher::parseUid(const std::string &response)
         try {
             uid = std::stoi(splitLine[splitLine.size() - 1]);
         } catch (std::exception e){
-            ERROR("Could not parse uid: {} : {}", s, e.what());
+            LOG_ERROR_F("Could not parse uid: {} : {}", s, e.what());
         }
 
         break;
@@ -105,7 +105,7 @@ std::string ImapFetcher::parseFolder(const std::string &response)
 
 void ImapFetcher::receiveMinUidAndFetchMissingUids(ResponseContent rc)
 {
-    LOG("Step 1b - Receive minimum UID from server");
+    LOG_INFO("Step 1b - Receive minimum UID from server");
     int minUid = parseUid(rc.header.getResponse());
     std::string folder = parseFolder(rc.header.getResponse());
     fetchMissingUids(folder, minUid);
@@ -113,7 +113,7 @@ void ImapFetcher::receiveMinUidAndFetchMissingUids(ResponseContent rc)
 
 void ImapFetcher::fetchMissingUids(std::string folder, int minUid)
 {
-    LOG("Step 2 - Fetch missing UIDs. Folder: {}, minUid: {}", folder, minUid);
+    LOG_INFO_F("Step 2 - Fetch missing UIDs. Folder: {}, minUid: {}", folder, minUid);
     auto callback = [&](ResponseContent rc, std::string folder){
         this->receiveMissingUidsAndFetchMails(rc, folder);
     };
@@ -124,9 +124,9 @@ void ImapFetcher::fetchMissingUids(std::string folder, int minUid)
 
 void ImapFetcher::receiveMissingUidsAndFetchMails(ResponseContent rc, std::string folder)
 {
-    LOG("Step 3 - Receive missing UIDs and prepare fetching mails");
+    LOG_INFO("Step 3 - Receive missing UIDs and prepare fetching mails");
     std::vector<int> uids = parseUids(rc.header.getResponse());
-    LOG("UID response: {}", rc.header.getResponse());
+    LOG_INFO_F("UID response: {}", rc.header.getResponse());
     filterOutOldUids(uids, folder);
     fetchMissingEmailsByUid(uids, folder);
 }
@@ -150,7 +150,7 @@ std::vector<int> ImapFetcher::parseUids(const std::string &response)
             i = std::stoi(s.substr(start, end - start));
             uids.push_back(i);
         } catch (std::exception e){
-            ERROR("Could not convert to number: {}", s.substr(start, end - start));
+            LOG_ERROR_F("Could not convert to number: {}", s.substr(start, end - start));
         }
     }
 
@@ -159,7 +159,7 @@ std::vector<int> ImapFetcher::parseUids(const std::string &response)
 
 void ImapFetcher::fetchMissingEmailsByUid(const std::vector<int> &uids, std::string folder)
 {
-    LOG("Step 4 - Prepare fetching missing emails by UID");
+    LOG_INFO("Step 4 - Prepare fetching missing emails by UID");
     auto callback = [&](ResponseContent rc, std::string folder){
         this->parseAndStoreEmail(rc, folder);
     };
@@ -173,7 +173,7 @@ void ImapFetcher::fetchMissingEmailsByUid(const std::vector<int> &uids, std::str
 
 void ImapFetcher::parseAndStoreEmail(ResponseContent rc, std::string folder)
 {
-    LOG("Step 5 - Store newly fetched email");
+    LOG_INFO("Step 5 - Store newly fetched email");
     Mail mail = imapMailParser.parseImapResponseToMail(rc, folder);
     dbManager->storeEmail(mail);
 

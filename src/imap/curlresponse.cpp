@@ -1,5 +1,4 @@
 #include "imap/curlresponse.h"
-#include <loglibrary.h>
 
 curlResponse::curlResponse()
 {

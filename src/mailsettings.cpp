@@ -1,6 +1,6 @@
 #include "mailsettings.h"
 #include "utils.h"
-#include <loglibrary.h>
+#include <loglib/loglib.h>
 #include <filesystem>
 
 
@@ -22,7 +22,7 @@ int MailSettings::getImapServerPort()
     try {
         return std::stoi(settings.getValue("mail", "imapServerPort"));
     } catch (std::exception e) {
-        ERROR("Could not get imap server port: {}", e.what());
+        LOG_ERROR_F("Could not get imap server port: {}", e.what());
         return DEFAULT_IMAP_PORT;
     }
 }
@@ -41,7 +41,7 @@ std::string MailSettings::getTempFolder()
 {
     std::string ret = settings.getValue("general", "tempfolder");
     if (ret.empty()){
-        ERROR("Could not get temp folder value from config");
+        LOG_ERROR_F("Could not get temp folder value from config");
         ret = std::filesystem::temp_directory_path().string() + "/" + "mailclient";
     }
     return ret;
@@ -64,7 +64,7 @@ int MailSettings::getDaysToFetch()
     try {
         return std::stoi(settings.getValue("mail", "daysToFetch"));
     } catch (std::exception e) {
-        ERROR("Could not get number of mails to fetch: {}", e.what());
+        LOG_ERROR_F("Could not get number of mails to fetch: {}", e.what());
         return DEFAULT_MAIL_DAYS_TO_FETCH;
     }
 }
@@ -81,7 +81,7 @@ int MailSettings::getImapRequestDelay()
     try {
         return std::stoi(settings.getValue("mail", "imapRequestDelay"));
     } catch (std::exception e) {
-        ERROR("Could not get imapRequestDelay config: {}", e.what());
+        LOG_ERROR_F("Could not get imapRequestDelay config: {}", e.what());
         return 0;
     }
 }
@@ -91,7 +91,7 @@ int MailSettings::getRefreshFrequencySeconds()
     try {
         return std::stoi(settings.getValue("mail", "refreshFrequencySeconds"));
     } catch (std::exception e){
-        ERROR("Could not get refreshFrequencySeconds: {}", e.what());
+        LOG_ERROR_F("Could not get refreshFrequencySeconds: {}", e.what());
         return DEFAULT_MAIL_REFRESH_FREQ_SECONDS;
     }
 }
